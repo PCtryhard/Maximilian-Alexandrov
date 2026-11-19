@@ -432,29 +432,29 @@
     <div class="sec-head">
       <span class="sec-num">03</span>
       <h2 class="sec-title">Explorations</h2>
-      <p class="sec-sub">Higher-risk personal R&amp;D. Neither shipped, and that is the point.</p>
+      <p class="sec-sub">Higher-risk personal R&amp;D. Both are active, and in both the most useful result so far is a measurement that went against what I wanted.</p>
     </div>
-    <p class="explain">These are the ambitious side projects where I learned the de novo protein-design and structural-modeling stack. With both, I built my own version and compared it honestly against the best existing work. Theirs was clearly better, so I studied what they did, <strong>kept what I had learned, and carried it forward.</strong></p>
+    <p class="explain">These are the two projects where I built the de novo protein-design and structural-modeling stack myself. Both are active. In each one the strongest thing I have is a corrective or negative result rather than a win, and <strong>I would rather show a number that closed a door than a claim I cannot support.</strong></p>
     <div class="proj-grid">
 
       <article class="proj">
         <div class="proj-top">
           <h3>OrthCom-immuno</h3>
-          <span class="status shelved">Shelved</span>
+          <span class="status live">Live</span>
         </div>
         <div class="proj-role">Personal research · methods &amp; validation</div>
-        <p>Set out to measure how badly the field's standard shortcut, swapping a non-canonical amino acid for its nearest canonical residue, distorts MHC-I antigen-presentation predictions, aiming for a position-resolved map of the liability the shortcut misses. The plan validated against PTM-modified HLA-A*02:01 peptides with measured IC50s before extending to synthetic aromatic ncAAs, built on an RDKit conformer plus Psi4 DFT scoring core. I shelved it once I found existing work already did this better, but I came away understanding the structural modeling deeply.</p>
-        <div class="tags"><span class="tag">MHC-I</span><span class="tag">ncAA</span><span class="tag">RDKit / Psi4 DFT</span></div>
+        <p>Measures how wrong it is to predict a chemically modified peptide's MHC-I binding by swapping the modified residue for its nearest canonical one and running a standard predictor. That swap is the field's current shortcut and had never been checked against measured binding. Against 154 PTM-modified HLA-A*02:01 peptides with known IC50s it holds rank order well (Spearman 0.81), but in 135 of those rows it reduces to asserting the modification changes nothing at all, and on the 58 of those with a measured value it is off by more than tenfold in 10 cases. Next is scoring the real modified residue structurally, on an RDKit conformer plus Psi4 DFT core.</p>
+        <div class="tags"><span class="tag">MHC-I</span><span class="tag">ncAA</span><span class="tag">NetMHCpan-4.1</span><span class="tag">RDKit / Psi4 DFT</span></div>
       </article>
 
       <article class="proj">
         <div class="proj-top">
           <h3>OrthCom</h3>
-          <span class="status shelved">Shelved</span>
+          <span class="status live">Live</span>
         </div>
         <div class="proj-role">Personal research · de novo design</div>
-        <p>An attempt to design a de novo bioorthogonal receptor that could selectively recognize a non-canonical amino acid "key" by an affinity gap, using protein hallucination and the modern design stack. After building it, I compared my version against the strongest published work, saw theirs was better, and folded what I had learned into OrthCom-immuno. It is where I picked up the full de novo toolchain end to end.</p>
-        <div class="tags"><span class="tag">RFdiffusion</span><span class="tag">ProteinMPNN</span><span class="tag">LigandMPNN</span><span class="tag">AF2-multimer</span></div>
+        <p>Designs a pocket that binds the non-canonical amino acid 2-naphthylalanine more tightly than the canonical aromatics it resembles, and measures the gap. My first target was 4-fluorophenylalanine and I dropped it on the evidence: one para-fluorine shifts LigandMPNN's sequence choice by 0.0034 bits, and in volume it adds only 6.7 Å<sup>3</sup> with zero steric exclusion, worth roughly 0.2 kcal/mol. 2-Naphthylalanine carries six times that surplus. The decisive comparison is tryptophan rather than phenylalanine, because a pocket shaped for 2-naphthylalanine buries indole's N-H donor unsatisfied. No pocket designed yet; the cloud package is staged and waiting on GPU time.</p>
+        <div class="tags"><span class="tag">RFdiffusionAA</span><span class="tag">LigandMPNN</span><span class="tag">AF2-multimer</span></div>
       </article>
 
     </div>
