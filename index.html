@@ -1,661 +1,1236 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Max Alexandrov · Computational Biology & Conservation</title>
-<meta name="description" content="Max Alexandrov: computational biology researcher and conservation organizer. Protein design, bioinformatics, synthetic biology, and community conservation.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Maximilian Alexandrov — protein design, benchmarks, field conservation</title>
+<meta name="description" content="Protein design and ML for biology. Four public pipelines. Three of them didn't go the way I wanted, and those results are up too.">
+<meta name="author" content="Maximilian Alexandrov">
+<meta property="og:title" content="Maximilian Alexandrov">
+<meta property="og:description" content="Protein design and ML for biology. Four public pipelines. Three of them didn't go the way I wanted, and those results are up too.">
+<meta property="og:type" content="profile">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700;12..96,800&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#FBFCFD;
-    --surface:#F1F5F4;
-    --surface-2:#E7EDEC;
-    --ink:#13201D;
-    --ink-soft:#3A4A46;
-    --muted:#697A75;
-    --line:#D8E0DE;
-    --accent:#0E5A4A;
-    --accent-bright:#19A887;
-    --accent-wash:#E4F2EE;
-    --max-w:1120px;
-    --r:14px;
-  }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family:'Inter',system-ui,sans-serif;
-    line-height:1.6;
-    -webkit-font-smoothing:antialiased;
-    overflow-x:hidden;
-  }
-  .wrap{max-width:var(--max-w);margin:0 auto;padding:0 28px}
-  a{color:inherit;text-decoration:none}
-  ::selection{background:var(--accent);color:#fff}
+:root{
+  --bg:#06070b; --panel:#0b0d14; --panel2:#0f1220; --panel3:#131729;
+  --ink:#eef0f7; --dim:#8b94ab; --dimmer:#5c6377;
+  --line:rgba(140,165,220,.15); --line2:rgba(140,165,220,.32);
+  --c1:#4d8bff; --c2:#45d6e8; --c3:#ffd23f; --c4:#ff7d45;
+  --kill:#ff2e9a; --ok:#5ef2a4; --violet:#a07bff;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --disp:"Bricolage Grotesque","Inter",system-ui,sans-serif;
+  --body:"Inter",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--body);
+  font-size:16px; line-height:1.55; -webkit-font-smoothing:antialiased; overflow-x:hidden; padding-left:74px}
+@media(max-width:900px){body{padding-left:0}}
+body::before{content:""; position:fixed; inset:0; z-index:0; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(77,139,255,.055) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(77,139,255,.055) 1px,transparent 1px),
+    linear-gradient(rgba(77,139,255,.022) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(77,139,255,.022) 1px,transparent 1px);
+  background-size:120px 120px,120px 120px,24px 24px,24px 24px;
+  mask-image:radial-gradient(ellipse 120% 90% at 50% 0%,#000 30%,transparent 95%)}
+body::after{content:""; position:fixed; inset:0; z-index:9999; pointer-events:none; opacity:.035;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
+.wrap{position:relative; z-index:1; max-width:1180px; margin:0 auto; padding:0 28px}
 
-  /* ---------- nav ---------- */
-  nav{
-    position:sticky;top:0;z-index:50;
-    background:rgba(251,252,253,.82);
-    backdrop-filter:blur(12px);
-    border-bottom:1px solid var(--line);
-  }
-  .nav-in{display:flex;align-items:center;justify-content:space-between;height:64px}
-  .brand{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;letter-spacing:-.01em}
-  .brand span{color:var(--accent)}
-  .nav-links{display:flex;gap:30px;font-size:14px;font-weight:500;color:var(--ink-soft)}
-  .nav-links a{position:relative;padding:4px 0;transition:color .2s}
-  .nav-links a:hover{color:var(--accent)}
-  .nav-links a::after{content:"";position:absolute;left:0;bottom:-2px;width:0;height:1.5px;background:var(--accent);transition:width .25s}
-  .nav-links a:hover::after{width:100%}
-  .nav-cta{font-family:'IBM Plex Mono';font-size:13px;font-weight:500;color:var(--accent);border:1px solid var(--line);padding:7px 14px;border-radius:8px;transition:all .2s}
-  .nav-cta:hover{border-color:var(--accent);background:var(--accent-wash)}
-  @media(max-width:760px){.nav-links{display:none}}
+h1,h2,h3,h4{font-family:var(--disp); font-weight:800; letter-spacing:-.02em; line-height:.95; margin:0}
+a{color:inherit}
+.num{font-family:var(--mono); font-variant-numeric:tabular-nums}
 
-  /* ---------- hero ---------- */
-  .hero{position:relative;padding:84px 0 60px;overflow:hidden}
-  .hero-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center}
-  @media(max-width:880px){.hero-grid{grid-template-columns:1fr;gap:36px}}
-  .eyebrow{
-    font-family:'IBM Plex Mono';font-size:12.5px;letter-spacing:.08em;
-    text-transform:uppercase;color:var(--accent);margin-bottom:22px;
-    display:flex;align-items:center;gap:10px;
-  }
-  .eyebrow::before{content:"";width:26px;height:1.5px;background:var(--accent)}
-  h1{
-    font-family:'Bricolage Grotesque';font-weight:800;
-    font-size:clamp(38px,6vw,62px);line-height:1.02;letter-spacing:-.025em;
-    margin-bottom:22px;
-  }
-  h1 .accent{color:var(--accent)}
-  .lede{font-size:clamp(16px,2vw,18.5px);color:var(--ink-soft);max-width:30em;margin-bottom:32px}
-  .hero-cta{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-  .btn{
-    font-family:'Inter';font-weight:600;font-size:14.5px;
-    padding:12px 22px;border-radius:10px;transition:all .2s;display:inline-flex;align-items:center;gap:8px;
-  }
-  .btn-primary{background:var(--accent);color:#fff}
-  .btn-primary:hover{background:#0a4a3d;transform:translateY(-1px)}
-  .btn-ghost{color:var(--ink);border:1px solid var(--line)}
-  .btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
-  .hero-meta{margin-top:38px;display:flex;gap:30px;flex-wrap:wrap;font-size:13.5px;color:var(--muted)}
-  .hero-meta b{display:block;font-family:'Bricolage Grotesque';font-weight:700;font-size:23px;color:var(--ink);letter-spacing:-.02em}
+/* ---------- rail ---------- */
+.rail{position:fixed; left:0; top:0; bottom:0; width:74px; z-index:60;
+  border-right:1px solid var(--line); background:linear-gradient(90deg,rgba(6,7,11,.95),rgba(6,7,11,.6));
+  backdrop-filter:blur(8px); display:flex; flex-direction:column; align-items:center; justify-content:space-between; padding:18px 0}
+.rail .mk{font-family:var(--mono); font-size:11px; font-weight:600; letter-spacing:.1em; color:var(--c2); text-align:center}
+.rail nav{display:flex; flex-direction:column; gap:2px; align-items:center}
+.rail nav a{font-family:var(--mono); font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--dimmer); text-decoration:none; writing-mode:vertical-rl; padding:9px 4px;
+  border-left:2px solid transparent; transition:color .18s,border-color .18s}
+.rail nav a:hover{color:var(--ink)}
+.rail nav a.on{color:var(--c2); border-left-color:var(--c2)}
+.rail .pct{font-family:var(--mono); font-size:10px; color:var(--dimmer); font-variant-numeric:tabular-nums}
+@media(max-width:900px){.rail{display:none}}
 
-  /* protein figure */
-  .figure{position:relative;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center}
-  .ribbon{width:100%;height:auto;max-width:400px}
-  /* scroll-driven translation rail: ribosome tracks mRNA, peptide grows per codon */
-  .transrail{position:fixed;top:0;right:0;width:72px;height:100vh;z-index:1;pointer-events:none;opacity:.7}
-  .transrail svg{width:100%;height:100%;display:block}
-  .transrail .mrna{stroke:var(--accent-bright);stroke-width:1.7;opacity:.45}
-  .transrail .codon{stroke:var(--line);stroke-width:1.5}
-  .transrail .backbone{stroke:var(--accent);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round;opacity:.85}
-  .transrail .aa{fill:var(--accent-bright)}
-  .transrail .aa-new{fill:var(--accent)}
-  .transrail .subunit-l{fill:var(--accent)}
-  .transrail .subunit-s{fill:var(--accent-bright)}
-  .transrail .trna{stroke:var(--muted);stroke-width:1.4;fill:none;opacity:.55}
-  .transrail .incoming{fill:var(--accent-bright);opacity:.6}
-  @media(max-width:1340px){.transrail{display:none}}
-  .ribbon path,.ribbon circle{stroke-linecap:round}
-  .draw{stroke-dasharray:1400;stroke-dashoffset:1400;animation:draw 2.6s ease forwards .3s}
-  @keyframes draw{to{stroke-dashoffset:0}}
-  .node{opacity:0;animation:pop .4s ease forwards}
-  @keyframes pop{to{opacity:1}}
-  .fig-cap{
-    position:absolute;bottom:-6px;left:50%;transform:translateX(-50%);
-    font-family:'IBM Plex Mono';font-size:11px;color:var(--muted);
-    letter-spacing:.04em;white-space:nowrap;
-  }
+/* ---------- hero ---------- */
+.hero{position:relative; padding:44px 0 42px; border-bottom:1px solid var(--line)}
+.nameBlock h1{font-size:min(calc(15.67vw - 20.4px),176px); line-height:.84; text-transform:uppercase; margin-bottom:26px}
+.nameBlock h1 span{display:block}
+.nameBlock h1 .l2{color:transparent; -webkit-text-stroke:1.6px var(--c1); text-stroke:1.6px var(--c1)}
+@media(max-width:900px){.nameBlock h1{font-size:calc(15.6vw - 9px); margin-bottom:20px}}
+@media(max-width:620px){.nameBlock h1 .l2{-webkit-text-stroke-width:1.1px}}
+.heroGrid{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,54%); gap:40px; align-items:start}
+@media(max-width:980px){.heroGrid{grid-template-columns:1fr; gap:26px}}
+.tagline{display:flex; flex-wrap:wrap; gap:8px}
+.chip{font-family:var(--mono); font-size:10.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--c2);
+  border:1px solid var(--line2); padding:4px 9px; border-radius:2px}
+.lede{margin:20px 0 0; max-width:46ch; font-size:19px; line-height:1.45; color:#ccd2e0}
+.lede b{color:var(--ink); font-weight:600}
+.lede .k{color:var(--kill); font-weight:600}
+.heroLinks{margin:24px 0 0; display:flex; flex-wrap:wrap; gap:9px}
+.btn{font-family:var(--mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; text-decoration:none;
+  padding:11px 16px; border:1px solid var(--line2); border-radius:2px; transition:.18s; display:inline-flex; gap:8px; align-items:center}
+.btn:hover{border-color:var(--c2); color:var(--c2); background:rgba(69,214,232,.06)}
+.btn.pri{background:var(--c1); border-color:var(--c1); color:#02040a; font-weight:600}
+.btn.pri:hover{background:#6ba0ff; border-color:#6ba0ff; color:#02040a}
 
-  /* sequence strip */
-  .seqstrip{
-    font-family:'IBM Plex Mono';font-size:13px;letter-spacing:.32em;
-    color:var(--accent);opacity:.42;white-space:nowrap;overflow:hidden;
-    border-top:1px solid var(--line);border-bottom:1px solid var(--line);
-    padding:11px 0;margin-top:8px;
-    -webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
-            mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);
-  }
-  .seqstrip span{display:inline-block;animation:slide 38s linear infinite}
-  @keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+/* ---------- specimen chamber ---------- */
+.chamber{position:relative; border:1px solid var(--line); border-radius:3px; overflow:hidden; margin:0;
+  background:radial-gradient(ellipse 80% 70% at 50% 45%,rgba(77,139,255,.10),transparent 70%),var(--panel)}
+.chamber::before,.chamber::after{content:""; position:absolute; width:11px; height:11px; border:1px solid var(--c2); opacity:.5; z-index:2}
+.chamber::before{top:7px; left:7px; border-right:0; border-bottom:0}
+.chamber::after{bottom:7px; right:7px; border-left:0; border-top:0}
+.stageWrap{position:relative}
+#stage{display:block; width:100%; height:452px; touch-action:pan-y; cursor:grab}
+#stage.drag{cursor:grabbing}
+@media(max-width:980px){#stage{height:340px}}
+.hud{position:absolute; inset:0; pointer-events:none; font-family:var(--mono); font-size:9.5px; letter-spacing:.08em; color:var(--dim)}
+.hud .tl{position:absolute; top:12px; left:16px; line-height:1.9}
+.hud .tl b{color:var(--c2); font-weight:500}
+.hud .br{position:absolute; bottom:11px; right:14px; text-align:right}
+.hud .bl{position:absolute; bottom:11px; left:16px; display:flex; align-items:center; gap:7px}
+.ramp{width:84px; height:5px; background:linear-gradient(90deg,var(--c4),var(--c3),var(--c2),var(--c1)); border-radius:3px}
+.lbl{position:absolute; transform:translate(-50%,-50%); white-space:nowrap; font-family:var(--mono); font-size:9.5px;
+  padding:2px 6px; border:1px solid currentColor; border-radius:2px; background:rgba(6,7,11,.86); line-height:1.5}
+.realtag{display:flex; align-items:center; gap:9px; padding:9px 14px; border-top:1px solid var(--line); background:rgba(94,242,164,.05)}
+.realtag .dot{width:7px; height:7px; border-radius:50%; background:var(--ok); flex:none; box-shadow:0 0 7px var(--ok)}
+.realtag b{font-family:var(--mono); font-size:9.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--ok)}
+.realtag span{font-size:12px; color:var(--dim)}
+.cap{padding:12px 14px; border-top:1px solid var(--line); font-size:12.5px; color:var(--dim); line-height:1.6}
+.cap code{font-family:var(--mono); font-size:11.5px; color:#c3cadb}
 
-  /* ---------- section scaffolding ---------- */
-  section{padding:84px 0;border-top:1px solid var(--line)}
-  .sec-head{display:flex;align-items:baseline;gap:16px;margin-bottom:42px}
-  .sec-num{font-family:'IBM Plex Mono';font-size:13px;color:var(--accent);font-weight:500}
-  .sec-title{font-family:'Bricolage Grotesque';font-weight:700;font-size:clamp(26px,3.6vw,36px);letter-spacing:-.02em}
-  .sec-sub{margin-left:auto;font-size:14px;color:var(--muted);max-width:24em;text-align:right}
-  @media(max-width:760px){.sec-sub{display:none}}
+/* ---------- counters ---------- */
+.counters{border-bottom:1px solid var(--line); background:var(--panel); position:relative; z-index:1}
+.counters .in{display:flex; flex-wrap:wrap; gap:0; max-width:1180px; margin:0 auto; padding:0 28px}
+.counters .c{flex:1 1 112px; padding:15px 12px 14px; border-left:1px solid var(--line)}
+.counters .c:first-child{border-left:0}
+.counters .c b{display:block; font-family:var(--mono); font-size:23px; font-weight:600; color:var(--ink); font-variant-numeric:tabular-nums; line-height:1.1}
+.counters .c i{display:block; font-style:normal; font-family:var(--mono); font-size:9px; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--dimmer); margin-top:6px}
 
-  /* about */
-  .about-grid{display:grid;grid-template-columns:1.4fr 1fr;gap:54px}
-  @media(max-width:820px){.about-grid{grid-template-columns:1fr;gap:32px}}
-  .about p{font-size:17px;color:var(--ink-soft);margin-bottom:18px;max-width:38em}
-  .about p strong{color:var(--ink);font-weight:600}
-  .card-fact{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px}
-  .card-fact h4{font-family:'IBM Plex Mono';font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin-bottom:14px;font-weight:600}
-  .fact-row{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
-  .fact-row:last-child{border-bottom:0}
-  .fact-row span:first-child{color:var(--muted)}
-  .fact-row span:last-child{font-weight:500;text-align:right}
+/* ---------- sequence marquee ---------- */
+.seqbar{border-bottom:1px solid var(--line); background:var(--panel); overflow:hidden; position:relative; z-index:1}
+.seqbar .meta{font-family:var(--mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--dimmer); padding:7px 28px 0}
+.seqtrack{display:flex; width:max-content; animation:slide 150s linear infinite; padding:4px 0 9px}
+.seqtrack span{font-family:var(--mono); font-size:12.5px; letter-spacing:.22em; white-space:pre}
+@keyframes slide{to{transform:translateX(-50%)}}
+.r-h{color:#5f6a85}.r-p{color:#45d6e8}.r-pos{color:#4d8bff}.r-neg{color:#ff7d45}.r-ar{color:#a07bff}.r-g{color:#3a4257}
 
-  /* projects */
-  .filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:34px}
-  .chip{
-    font-family:'IBM Plex Mono';font-size:12.5px;font-weight:500;
-    padding:7px 15px;border-radius:99px;border:1px solid var(--line);
-    color:var(--ink-soft);cursor:pointer;transition:all .18s;background:none;
-  }
-  .chip:hover{border-color:var(--accent);color:var(--accent)}
-  .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-  .proj-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
-  @media(max-width:760px){.proj-grid{grid-template-columns:1fr}}
-  .proj{
-    background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
-    padding:26px 26px 22px;display:flex;flex-direction:column;
-    transition:transform .2s,box-shadow .2s,border-color .2s;position:relative;overflow:hidden;
-  }
-  .proj::before{content:"";position:absolute;left:0;top:0;width:3px;height:100%;background:var(--accent);transform:scaleY(0);transform-origin:top;transition:transform .25s}
-  .proj:hover{transform:translateY(-3px);box-shadow:0 14px 34px -18px rgba(14,90,74,.4);border-color:var(--accent-bright)}
-  .proj:hover::before{transform:scaleY(1)}
-  .proj-top{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:14px}
-  .proj-when{font-family:'IBM Plex Mono';font-size:11.5px;color:var(--muted);white-space:nowrap}
-  .proj h3{font-family:'Bricolage Grotesque';font-weight:700;font-size:20px;letter-spacing:-.015em;line-height:1.18;max-width:18em}
-  .proj-role{font-family:'IBM Plex Mono';font-size:12px;color:var(--accent);margin-bottom:12px;font-weight:500}
-  .proj p{font-size:14.5px;color:var(--ink-soft);margin-bottom:16px;flex:1}
-  .tags{display:flex;gap:7px;flex-wrap:wrap}
-  .tag{font-family:'IBM Plex Mono';font-size:11px;padding:4px 9px;border-radius:6px;background:var(--accent-wash);color:var(--accent);font-weight:500}
-  .proj.hide{display:none}
-  .proj-link{margin-top:13px;font-family:'IBM Plex Mono';font-size:12.5px;font-weight:500;color:var(--accent);display:inline-flex;align-items:center;gap:6px;transition:gap .2s;align-self:flex-start;border-bottom:1px solid transparent}
-  .proj-link:hover{gap:11px;border-bottom-color:var(--accent)}
-  .proj-note{margin-top:13px;font-family:'IBM Plex Mono';font-size:11.5px;color:var(--muted);font-style:italic}
-  .status{font-family:'IBM Plex Mono';font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:99px;letter-spacing:.03em;white-space:nowrap}
-  .status.live{background:var(--accent-wash);color:var(--accent)}
-  .status.shelved{background:var(--surface-2);color:var(--muted)}
-  .explain{font-size:15px;color:var(--ink-soft);max-width:46em;margin-bottom:34px}
-  .explain strong{color:var(--ink);font-weight:600}
+/* ---------- sections ---------- */
+section{position:relative; z-index:1; padding:80px 0; border-bottom:1px solid var(--line)}
+.shead{display:flex; align-items:baseline; gap:16px; flex-wrap:wrap}
+.shead .tag{font-family:var(--mono); font-size:10px; letter-spacing:.2em; text-transform:uppercase; color:var(--c2);
+  border:1px solid var(--line2); padding:4px 8px; border-radius:2px}
+.shead h2{font-size:clamp(28px,4.4vw,52px); text-transform:uppercase}
+.sintro{max-width:62ch; color:#aeb6c8; margin:14px 0 0; font-size:16px}
 
-  /* toolkit */
-  .tool-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
-  @media(max-width:760px){.tool-grid{grid-template-columns:1fr}}
-  .tool{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px}
-  .tool h4{font-family:'Bricolage Grotesque';font-weight:700;font-size:16.5px;margin-bottom:14px;display:flex;align-items:center;gap:9px}
-  .tool h4 .dot{width:7px;height:7px;border-radius:50%;background:var(--accent-bright)}
-  .tool ul{list-style:none;display:flex;flex-direction:column;gap:8px}
-  .tool li{font-size:14px;color:var(--ink-soft);font-family:'IBM Plex Mono';font-size:13px}
-  .tool li::before{content:"› ";color:var(--accent)}
+/* ---------- plates ---------- */
+.plate{border:1px solid var(--line); background:var(--panel); margin-top:30px}
+.pTop{display:flex; flex-wrap:wrap; gap:9px 16px; align-items:center; padding:14px 20px; border-bottom:1px solid var(--line); background:var(--panel2)}
+.pTop .pid{font-family:var(--mono); font-size:10px; letter-spacing:.2em; color:var(--dimmer)}
+.pTop h3{font-size:clamp(21px,2.5vw,29px)}
+.pTop .sp{flex:1}
+.chipx{font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; padding:4px 8px; border-radius:2px; border:1px solid currentColor}
+.chipx.live{color:var(--ok)}.chipx.arch{color:var(--c3)}.chipx.drop{color:var(--kill)}
 
-  /* timeline */
-  .tl{position:relative;margin-left:8px;padding-left:30px}
-  .tl::before{content:"";position:absolute;left:0;top:6px;bottom:6px;width:1.5px;background:var(--line)}
-  .tl-item{position:relative;padding-bottom:30px}
-  .tl-item:last-child{padding-bottom:0}
-  .tl-item::before{content:"";position:absolute;left:-34px;top:6px;width:11px;height:11px;border-radius:50%;background:var(--bg);border:2px solid var(--accent)}
-  .tl-when{font-family:'IBM Plex Mono';font-size:12px;color:var(--accent);margin-bottom:5px}
-  .tl-item h4{font-family:'Bricolage Grotesque';font-weight:700;font-size:18px;margin-bottom:6px;letter-spacing:-.01em}
-  .tl-item p{font-size:14.5px;color:var(--ink-soft);max-width:42em}
+/* dense key/value rail under each plate header */
+.pMeta{display:flex; flex-wrap:wrap; gap:0; border-bottom:1px solid var(--line); background:var(--panel2)}
+.pMeta div{flex:1 1 120px; padding:9px 14px; border-left:1px solid var(--line); min-width:0}
+.pMeta div:first-child{border-left:0}
+.pMeta k{display:block; font-family:var(--mono); font-size:8.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--dimmer)}
+.pMeta v{display:block; font-family:var(--mono); font-size:12.5px; line-height:1.3; color:#c6ccdb;
+  font-variant-numeric:tabular-nums; margin-top:3px; overflow-wrap:anywhere}
 
-  /* contact */
-  .contact{text-align:center;padding:96px 0}
-  .contact h2{font-family:'Bricolage Grotesque';font-weight:800;font-size:clamp(30px,5vw,52px);letter-spacing:-.025em;margin-bottom:20px}
-  .contact h2 .accent{color:var(--accent)}
-  .contact p{font-size:17px;color:var(--ink-soft);max-width:30em;margin:0 auto 34px}
-  .contact-links{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.pBody{display:grid; grid-template-columns:minmax(0,1fr) minmax(0,44%)}
+@media(max-width:940px){.pBody{grid-template-columns:1fr}}
+.pText{padding:22px 22px 24px; border-right:1px solid var(--line)}
+@media(max-width:940px){.pText{border-right:0; border-bottom:1px solid var(--line)}}
+.pFig{padding:20px 18px; align-self:start; position:sticky; top:16px;
+  background:linear-gradient(rgba(140,165,220,.04) 1px,transparent 1px) 0 0/100% 18px,
+             linear-gradient(90deg,rgba(140,165,220,.04) 1px,transparent 1px) 0 0/18px 100%}
+@media(max-width:940px){.pFig{position:static}}
+.pWide{border-top:1px solid var(--line); padding:20px 22px 22px;
+  background:linear-gradient(rgba(140,165,220,.04) 1px,transparent 1px) 0 0/100% 18px,
+             linear-gradient(90deg,rgba(140,165,220,.04) 1px,transparent 1px) 0 0/18px 100%}
+.wideGrid{display:grid; grid-template-columns:minmax(0,1.9fr) minmax(0,1fr); gap:26px}
+@media(max-width:860px){.wideGrid{grid-template-columns:1fr; gap:22px}}
 
-  footer{border-top:1px solid var(--line);padding:30px 0;color:var(--muted);font-size:13px}
-  .foot-in{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
-  .foot-in .mono{font-family:'IBM Plex Mono'}
+.q{font-size:17px; line-height:1.4; color:var(--ink); font-weight:600; margin:0 0 16px; padding-left:22px; position:relative}
+.q::before{content:"Q"; position:absolute; left:0; top:1px; font-family:var(--mono); font-size:11px; color:var(--c2); font-weight:400}
+ul.pts{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:11px}
+ul.pts li{position:relative; padding-left:22px; font-size:14.5px; line-height:1.55; color:#b9c0d1}
+ul.pts li::before{content:""; position:absolute; left:4px; top:9px; width:5px; height:5px; background:var(--c2); border-radius:1px}
+ul.pts li.k::before{background:var(--kill)}
+ul.pts li b{color:var(--ink); font-weight:600}
+.n{font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--c2); background:rgba(69,214,232,.10); padding:1px 4px; border-radius:2px; font-size:.95em}
+.nk{font-family:var(--mono); font-variant-numeric:tabular-nums; color:var(--kill); background:rgba(255,46,154,.10); padding:1px 4px; border-radius:2px; font-size:.95em}
+.notshown{margin-top:18px; padding:11px 14px; border-left:2px solid var(--kill); background:rgba(255,46,154,.045)}
+.notshown b{display:block; font-family:var(--mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--kill); margin-bottom:7px}
+.notshown ul{list-style:none; margin:0; padding:0; display:flex; flex-wrap:wrap; gap:5px 0}
+.notshown li{font-size:12.5px; color:#9aa2b5; padding-right:11px; margin-right:11px; border-right:1px solid rgba(255,46,154,.3); line-height:1.4}
+.notshown li:last-child{border-right:0}
+.pLinks{display:flex; flex-wrap:wrap; gap:8px; margin-top:18px}
+.pLinks a{font-family:var(--mono); font-size:10px; letter-spacing:.1em; text-transform:uppercase; text-decoration:none;
+  padding:8px 12px; border:1px solid var(--line2); border-radius:2px; transition:.18s}
+.pLinks a:hover{border-color:var(--c2); color:var(--c2); background:rgba(69,214,232,.06)}
 
-  @media(prefers-reduced-motion:reduce){
-    *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
-    .draw{stroke-dashoffset:0}
-    .node{opacity:1}
-  }
+/* figures */
+.fig{margin:0 0 22px}
+.fig:last-child{margin-bottom:0}
+.figcap{font-family:var(--mono); font-size:9.5px; letter-spacing:.13em; text-transform:uppercase; color:var(--dimmer); margin:0 0 9px}
+.figcap b{color:var(--c2); font-weight:500}
+.figfoot{font-family:var(--mono); font-size:10px; color:var(--dimmer); margin:7px 0 0; line-height:1.5}
+svg{display:block; width:100%; height:auto; overflow:visible}
+svg text{font-family:var(--mono); fill:var(--dim)}
+
+/* ---------- cards ---------- */
+.cards{display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:1px; background:var(--line); border:1px solid var(--line); margin-top:28px}
+.card{background:var(--panel); padding:20px; display:flex; flex-direction:column; gap:7px}
+.card .when{font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--c2)}
+.card h4{font-size:18px; font-weight:700}
+.card .where{font-family:var(--mono); font-size:11px; color:var(--dimmer)}
+.card p{margin:3px 0 0; font-size:13.5px; color:#a8b0c2; line-height:1.55}
+.card .ft{margin-top:auto; padding-top:11px; display:flex; flex-wrap:wrap; gap:6px}
+.card .ft span,.card .ft a{font-family:var(--mono); font-size:9.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--dimmer); border:1px solid var(--line); padding:3px 7px; border-radius:2px; text-decoration:none}
+.card .ft a:hover{color:var(--c2); border-color:var(--c2)}
+
+/* ---------- field ---------- */
+#field{background:radial-gradient(ellipse 70% 60% at 15% 20%,rgba(94,242,164,.07),transparent 70%),
+  radial-gradient(ellipse 60% 50% at 85% 80%,rgba(160,123,255,.06),transparent 70%)}
+#field .shead .tag{color:var(--ok); border-color:rgba(94,242,164,.35)}
+.fieldGrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:20px; margin-top:28px}
+.fcard{border:1px solid var(--line); border-top:2px solid var(--ok); background:var(--panel); padding:20px}
+.fcard .when{font-family:var(--mono); font-size:9.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--ok)}
+.fcard h4{font-size:18px; margin:8px 0 9px}
+.fcard p{margin:0; font-size:13.5px; color:#a8b0c2; line-height:1.6}
+.fcard p .g{font-family:var(--mono); color:var(--ok); font-size:.95em}
+
+/* ---------- stack ---------- */
+.tiers{display:grid; gap:1px; background:var(--line); border:1px solid var(--line); margin-top:28px}
+.tier{background:var(--panel); padding:18px 20px; display:grid; grid-template-columns:200px 1fr; gap:18px; align-items:start}
+@media(max-width:760px){.tier{grid-template-columns:1fr; gap:10px}}
+.tier .th{font-family:var(--mono); font-size:11px; letter-spacing:.1em; color:var(--c2); line-height:1.6}
+.tier .tl{display:flex; flex-wrap:wrap; gap:6px}
+.tier .tl span{font-family:var(--mono); font-size:11.5px; color:#c3cadb; border:1px solid var(--line); background:var(--panel2); padding:5px 10px; border-radius:2px}
+.tier.say .tl{flex-direction:column; gap:8px}
+.tier.say .tl span{border:0; background:none; padding:0; font-family:var(--body); font-size:14.5px; color:#b9c0d1; line-height:1.5}
+.tier.say .tl span::before{content:"— "; color:var(--dimmer)}
+
+/* ---------- contact ---------- */
+#contact{border-bottom:0; padding-bottom:64px}
+#contact h2{font-size:clamp(34px,6vw,76px); line-height:.94; text-transform:uppercase}
+.cRow{display:flex; flex-wrap:wrap; gap:10px; margin-top:26px}
+footer{position:relative; z-index:1; border-top:1px solid var(--line); padding:20px 0; background:var(--panel)}
+.fRow{display:flex; flex-wrap:wrap; gap:8px 24px; justify-content:space-between; font-family:var(--mono);
+  font-size:10px; letter-spacing:.1em; text-transform:uppercase; color:var(--dimmer)}
+
+.rv{opacity:0; transform:translateY(14px); transition:opacity .55s ease,transform .55s ease}
+.rv.in{opacity:1; transform:none}
+@media(prefers-reduced-motion:reduce){
+  .rv{opacity:1; transform:none; transition:none}
+  .seqtrack{animation:none}
+  html{scroll-behavior:auto}
+}
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="wrap nav-in">
-    <a href="#top" class="brand">Max <span>Alexandrov</span></a>
-    <div class="nav-links">
-      <a href="#about">About</a>
-      <a href="#work">Work</a>
-      <a href="#explorations">Explorations</a>
-      <a href="#toolkit">Toolkit</a>
-      <a href="#impact">Impact</a>
-    </div>
-    <a href="#contact" class="nav-cta">Get in touch</a>
-  </div>
-</nav>
+<aside class="rail">
+  <div class="mk">MA<br>·26</div>
+  <nav id="rail">
+    <a href="#top" class="on">Top</a>
+    <a href="#specimen">Specimen</a>
+    <a href="#results">Results</a>
+    <a href="#track">Before</a>
+    <a href="#field">Field</a>
+    <a href="#stack">Stack</a>
+    <a href="#contact">Contact</a>
+  </nav>
+  <div class="pct" id="pct">00</div>
+</aside>
 
-<div class="transrail" aria-hidden="true">
-  <svg viewBox="0 0 72 1000" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-    <line class="mrna" x1="52" y1="0" x2="52" y2="1000"/>
-    <g class="codons"></g>
-    <polyline class="backbone" id="pepBackbone" points=""/>
-    <g class="peptide" id="pepBeads"></g>
-    <g id="riboGrp">
-      <path class="trna" d="M52 20 L52 9"/>
-      <circle class="incoming" cx="52" cy="22" r="4.4"/>
-      <ellipse class="subunit-s" cx="52" cy="6" rx="10" ry="7"/>
-      <ellipse class="subunit-l" cx="40" cy="-6" rx="13.5" ry="11"/>
-    </g>
-  </svg>
-</div>
-
-
+<!-- ======================== HERO ======================== -->
 <header class="hero" id="top">
-  <div class="wrap hero-grid">
-    <div>
-      <div class="eyebrow">Computational biology · Conservation</div>
-      <h1>Designing proteins,<br>and <span class="accent">repairing</span> ecosystems.</h1>
-      <p class="lede">I am a researcher and conservation organizer who loves taking science out of the lab and putting it to work in the real world. From protein design pipelines to government-partnered habitat restoration, I build things end to end and hand them off so they last.</p>
-      <div class="hero-cta">
-        <a href="#work" class="btn btn-primary">See the work →</a>
-        <a href="#contact" class="btn btn-ghost">Get in touch</a>
-      </div>
-      <div class="hero-meta">
-        <div><b>5+</b>research &amp; engineering projects</div>
-        <div><b>3 yrs</b>leading field conservation</div>
-        <div><b>44/45</b>predicted IB diploma</div>
-      </div>
+  <div class="wrap">
+    <div class="nameBlock">
+      <h1><span>Maximilian</span><span class="l2">Alexandrov</span></h1>
     </div>
-    <div class="figure">
-      <svg class="ribbon" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Stylized protein backbone ribbon">
-        <path class="draw" d="M40 250 C 60 180, 95 200, 100 150 C 105 100, 70 95, 95 60 C 115 32, 160 45, 165 80 C 170 120, 135 130, 150 170 C 162 205, 205 195, 210 150 C 215 105, 185 100, 205 70 C 225 42, 270 58, 268 100 C 266 150, 240 175, 270 230"
-          stroke="#0E5A4A" stroke-width="9" opacity="0.85"/>
-        <path class="draw" style="animation-delay:.7s" d="M52 258 C 72 188, 107 208, 112 158 C 117 108, 82 103, 107 68"
-          stroke="#19A887" stroke-width="3.5" opacity="0.7"/>
-        <circle class="node" style="animation-delay:1.6s" cx="95" cy="60" r="6" fill="#19A887"/>
-        <circle class="node" style="animation-delay:1.8s" cx="165" cy="80" r="6" fill="#0E5A4A"/>
-        <circle class="node" style="animation-delay:2.0s" cx="210" cy="150" r="6" fill="#19A887"/>
-        <circle class="node" style="animation-delay:2.2s" cx="268" cy="100" r="6" fill="#0E5A4A"/>
-        <circle class="node" style="animation-delay:2.4s" cx="100" cy="150" r="5" fill="#0E5A4A"/>
-      </svg>
-      <div class="fig-cap">de novo backbone · designed, not found</div>
+    <div class="heroGrid">
+      <div>
+        <div class="tagline">
+          <span class="chip">Protein design</span>
+          <span class="chip">ML for biology</span>
+          <span class="chip">Zürich</span>
+        </div>
+        <p class="lede">Protein design and machine learning for biology. <b>Four pipelines running, all public.</b>
+          <span class="k">Three of them didn't go the way I wanted.</span> I've put those results up anyway.</p>
+        <div class="heroLinks">
+          <a class="btn pri" href="#results">The four →</a>
+          <a class="btn" href="https://github.com/PCtryhard" target="_blank" rel="noopener">GitHub</a>
+          <a class="btn" href="mailto:maximilian.alexandrov@hotmail.com">Email</a>
+        </div>
+      </div>
+
+      <figure class="chamber">
+        <div class="stageWrap">
+          <canvas id="stage" aria-label="Rotating 3D model of a de novo designed enzyme pocket with its ligand"></canvas>
+          <div class="hud">
+            <div class="tl">
+              <b>SPECIMEN</b> 01.c04.mutate.d8ca9d<br>
+              260 aa · 6NT · score <b>0.8658</b><br>
+              iPTM <b>0.922</b> · pLDDT <b>0.904</b>
+            </div>
+            <div class="bl"><span>pLDDT 44</span><span class="ramp"></span><span>99</span></div>
+            <div class="br" id="hint">drag to rotate</div>
+          </div>
+        </div>
+        <div class="realtag">
+          <span class="dot"></span>
+          <b>Real structure</b> <span>One of my actual designs, straight out of the run output.</span>
+        </div>
+        <figcaption class="cap">
+          Boltz-2 prediction of a Kemp eliminase pocket I designed at the D-BSSE Protein Design Hackathon in Basel,
+          21–22 Nov 2026. Parsed out of <code>data/rescored/cif/01_mm_d8ca9d.cif</code>: 260 residues coloured by
+          pLDDT, the 6NT substrate in the pocket, and the two hydrogen bonds the scorer was built around.
+        </figcaption>
+      </figure>
     </div>
   </div>
 </header>
 
-<div class="seqstrip" aria-hidden="true">
-  <span>M K L V F G S R T D E Q I N P A Y H W C M K A L V D E G S R T Q I N F P Y H &nbsp;·&nbsp; M K L V F G S R T D E Q I N P A Y H W C M K A L V D E G S R T Q I N F P Y H &nbsp;·&nbsp; </span>
+<div class="counters">
+  <div class="in">
+    <div class="c"><b>1,122</b><i>designs generated</i></div>
+    <div class="c"><b>341</b><i>Acr proteins, 76 folds</i></div>
+    <div class="c"><b>3,410</b><i>decoys screened</i></div>
+    <div class="c"><b>154</b><i>peptides re-scored</i></div>
+    <div class="c"><b>121</b><i>model layers swept</i></div>
+    <div class="c"><b>283</b><i>tests, all green</i></div>
+  </div>
 </div>
 
-<section id="about">
+<div class="seqbar">
+  <div class="meta">Designed sequence · 260 aa · seq_hash 025aa3a0d0c2 · coloured by residue class</div>
+  <div class="seqtrack" id="seqtrack" aria-hidden="true"></div>
+</div>
+
+<!-- ======================== SPECIMEN ======================== -->
+<section id="specimen">
   <div class="wrap">
-    <div class="sec-head">
-      <span class="sec-num">01</span>
-      <h2 class="sec-title">About</h2>
-      <p class="sec-sub">A researcher who treats biology as something you do with people, to learn and better the world. Not just for an outcome.</p>
+    <div class="shead"><span class="tag">Header model</span><h2>Where it came from</h2></div>
+    <p class="sintro">One design out of 1,122. Here's what went into it.</p>
+    <div class="pMeta rv" style="border:1px solid var(--line); margin-top:24px">
+      <div><k>design id</k><v>01.c04.mutate.d8ca9d</v></div>
+      <div><k>score</k><v>0.8658</v></div>
+      <div><k>lineage</k><v>.8114 → .8393 → .8658</v></div>
+      <div><k>mutations</k><v>W234D, then I174V</v></div>
+      <div><k>both in the pocket</k><v>yes</v></div>
+      <div><k>bonds</k><v>2.50 Å / 3.17 Å</v></div>
+      <div><k>gated</k><v>0</v></div>
+      <div><k>hardware</k><v>2 × 12 GB · Euler</v></div>
     </div>
-    <div class="about-grid">
-      <div class="about">
-        <p>My work lives at the meeting point of <strong>data-driven biology</strong> and <strong>hands-on conservation</strong>. On the computational side, I have built bioinformatics pipelines at Cambridge's Teichmann Lab, taught myself to apply zero-shot machine learning to discover novel anti-CRISPR proteins, and worked daily with the modern protein-design stack: AlphaFold, ESM-2, ProteinMPNN, and RFdiffusion.</p>
-        <p>On the ground, I have spent three years leading field conservation alongside the villages near my school, from mapping and removing invasive species with our local government to investigating water pollution from textile manufacturing. The throughline is simple: I like understanding a problem deeply, building something real to address it, and making sure it keeps running after I step away.</p>
-        <p>I recently graduated from UWC Changshu China, and I am excited to put AI to work on problems that matter for real communities.</p>
+  </div>
+</section>
+
+<!-- ======================== RESULTS ======================== -->
+<section id="results">
+  <div class="wrap">
+    <div class="shead"><span class="tag">01 – 04</span><h2>Four pipelines</h2></div>
+    <p class="sintro">All public, with the data and the logs in the repo. Short version here, full version on GitHub.
+      Pink means the result went against me.</p>
+
+    <!-- ========== PLATE 01 ========== -->
+    <article class="plate rv">
+      <div class="pTop">
+        <span class="pid">01</span><h3>Protein Madness</h3><span class="sp"></span>
+        <span class="chipx arch">Nov 2026</span><span class="chipx live">pipeline live</span>
       </div>
-      <div class="card-fact">
-        <h4>At a glance</h4>
-        <div class="fact-row"><span>Based in</span><span>Zürich, Switzerland</span></div>
-        <div class="fact-row"><span>Focus</span><span>Protein science · ML for bio</span></div>
-        <div class="fact-row"><span>Also</span><span>Conservation organizing</span></div>
-        <div class="fact-row"><span>Education</span><span>IB · UWC Changshu '26</span></div>
-        <div class="fact-row"><span>Languages</span><span>EN · DE native · BG fluent</span></div>
-        <div class="fact-row"><span>Open to</span><span>Social-impact AI work</span></div>
+      <div class="pMeta">
+        <div><k>designs</k><v>1,122</v></div>
+        <div><k>scored</k><v>142 · 12.7%</v></div>
+        <div><k>variants</k><v>13</v></div>
+        <div><k>tests</k><v>283</v></div>
+        <div><k>euler jobs</k><v>21899142–52</v></div>
+        <div><k>commit</k><v>852df71</v></div>
+        <div><k>longest job</k><v>1:48 / 2:05</v></div>
+      </div>
+      <div class="pBody">
+        <div class="pText">
+          <p class="q">Can a search loop beat random sampling at placing two hydrogen bonds in a de novo enzyme pocket,
+            on two 12 GB GPUs over a weekend?</p>
+          <ul class="pts">
+            <li><b>The search wins, and by a lot.</b> Fresh random seeds clear the geometry gate <span class="n">6.2%</span>
+              of the time. Partial re-diffusion gets <span class="n">14.6%</span>. Re-sequencing the same backbone gets
+              <span class="n">42.5%</span>. Search against random is 21.9% vs 6.2%, Fisher
+              <span class="n">p ≈ 1.5 × 10⁻¹⁴</span>, and the ordering replicated across two batches.</li>
+            <li class="k"><b>Getting both bonds at once is the hard part.</b> Each lands 10–37% alone,
+              both together about <span class="nk">6%</span>. Variant 12 put 14 of 60 on one bond and 6 of 60 on the
+              other and <span class="nk">0 on both</span>, against 1.4 expected if they were independent. So adding more backbones doesn't really help much. That's the bit that needs fixing.</li>
+            <li>Letting the loop run 3 cycles instead of 1 took scored designs from 63/830 to
+              <span class="n">142/1,122</span> and raised the best score in 7 of 11 variants. At 1 cycle, a variant that missed on cycle 0 got no search at all and just ended up doing random sampling.</li>
+            <li class="k"><b>3 of the 5 score terms are noise.</b> I ran a seed-to-seed control and compared the spread
+              within one design to the spread between designs. Both angle terms and the donor distance sit at a ratio
+              near or above 1, so they cannot separate designs. The brief fixed the angle weight at 0.40, so I left it
+              alone and noted in the log that the data says otherwise.</li>
+          </ul>
+          <div class="notshown"><b>Doesn't show</b><ul>
+            <li>no wet lab, all in silico</li><li>I picked the final 20 by hand</li>
+            <li>the ten-seed control on <em>this</em> pipeline never got run</li>
+            <li>sidechain placement is where predictors are weakest</li></ul></div>
+          <div class="pLinks">
+            <a href="https://github.com/PCtryhard/protein-madness" target="_blank" rel="noopener">Repo ↗</a>
+            <a href="https://github.com/PCtryhard/protein-madness/blob/main/RUNLOG.md" target="_blank" rel="noopener">RUNLOG ↗</a>
+            <a href="https://github.com/PCtryhard/protein-madness/blob/main/DECISIONS.md" target="_blank" rel="noopener">Decisions ↗</a>
+          </div>
+        </div>
+        <div class="pFig">
+          <div class="fig"><p class="figcap">Fig. 1 — <b>gate-clearing rate by branch</b></p><div id="f-branch"></div></div>
+          <div class="fig"><p class="figcap">Fig. 2 — <b>can each score term separate designs?</b></p><div id="f-noise"></div>
+            <p class="figfoot">within-design seed spread ÷ between-design spread</p></div>
+        </div>
+      </div>
+      <div class="pWide">
+        <div class="wideGrid">
+          <div class="fig"><p class="figcap">Fig. 3 — <b>every design in the final batch.</b> One square each, filled = cleared the gate</p>
+            <div id="f-units"></div></div>
+          <div class="fig"><p class="figcap">Fig. 4 — <b>1 cycle → 3 cycles</b>, per variant</p><div id="f-slope"></div>
+            <p class="figfoot">best score improved in 7 of 11</p></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ========== PLATE 02 ========== -->
+    <article class="plate rv">
+      <div class="pTop">
+        <span class="pid">02</span><h3>Acr-LOFO</h3><span class="sp"></span>
+        <span class="chipx live">Live</span><span class="chipx arch">Yau Science Award</span>
+      </div>
+      <div class="pMeta">
+        <div><k>positives</k><v>341</v></div>
+        <div><k>families</k><v>76</v></div>
+        <div><k>decoys</k><v>3,410 · 1:10</v></div>
+        <div><k>lengths</k><v>52–322 aa</v></div>
+        <div><k>models swept</k><v>5</v></div>
+        <div><k>layers swept</k><v>121</v></div>
+        <div><k>random AP</k><v>0.091</v></div>
+        <div><k>best AP</k><v>0.430</v></div>
+      </div>
+      <div class="pBody">
+        <div class="pText">
+          <p class="q">Can a method find members of an anti-CRISPR family it has never seen?</p>
+          <ul class="pts">
+            <li><b>Published predictors don't test that.</b> They hold out random members of families they already
+              trained on, which measures interpolation inside known families. I hold out all
+              <span class="n">76</span> families in turn, with the folds frozen in a manifest so anyone's embedding can
+              be scored on exactly the folds my numbers used.</li>
+            <li class="k"><b>Homology search falls apart when the family is genuinely new.</b> BLASTp
+              <span class="nk">0.566</span> AUROC, phmmer <span class="nk">0.531</span>. Chance is 0.500.</li>
+            <li>ESM-2 650M with a logistic probe: <span class="n">0.831</span> AUROC and
+              <span class="n">0.430</span> AP, against a random baseline of 0.091.</li>
+            <li class="k"><b>3B is worse than 650M.</b> Both metrics, all three readouts, each peaking at 650M on its own. It's a real curve with a maximum in the middle.</li>
+            <li>650M's best layer is its <em>last</em> one, which is the opposite of the usual advice. And taking the
+              final layer as a default costs <span class="n">0.053</span> AUROC at 150M and 0.043 at 3B. It happens to
+              be right at exactly one model size.</li>
+          </ul>
+          <div class="notshown"><b>Doesn't show</b><ul>
+            <li>56 of 76 families are singletons</li><li>3 families hold a third of the positives</li>
+            <li>per-layer curves swing 0.05 AUROC between neighbours</li>
+            <li>PROVENANCE.md lists 10 code/manuscript disagreements</li></ul></div>
+          <div class="pLinks">
+            <a href="https://github.com/PCtryhard/acr-lofo-benchmark" target="_blank" rel="noopener">Repo ↗</a>
+            <a href="https://github.com/PCtryhard/acr-lofo-benchmark/blob/main/docs/PROVENANCE.md" target="_blank" rel="noopener">Provenance ↗</a>
+            <a href="anti-crispr-zero-shot-paper.pdf">Paper (PDF)</a>
+          </div>
+        </div>
+        <div class="pFig">
+          <div class="fig"><p class="figcap">Fig. 5 — <b>model size vs performance.</b> It peaks and comes back down</p>
+            <div id="f-scaling"></div></div>
+          <div class="fig"><p class="figcap">Fig. 6 — <b>average precision by method</b></p><div id="f-methods"></div></div>
+        </div>
+      </div>
+      <div class="pWide">
+        <div class="fig"><p class="figcap">Fig. 7 — <b>every layer of every model.</b> Average precision, logistic probe, same frozen folds. Boxed cell = that model's best</p>
+          <div id="f-heat"></div></div>
+        <div class="fig" style="margin-top:22px"><p class="figcap">Fig. 8 — <b>per-family result vs family size.</b> The small families are why the micro numbers need a caveat</p>
+          <div id="f-fam"></div></div>
+      </div>
+    </article>
+
+    <!-- ========== PLATE 03 ========== -->
+    <article class="plate rv">
+      <div class="pTop">
+        <span class="pid">03</span><h3>OrthCom</h3><span class="sp"></span>
+        <span class="chipx live">Live</span><span class="chipx drop">target 1 dropped</span>
+      </div>
+      <div class="pMeta">
+        <div><k>anchors built</k><v>4, hash-pinned</v></div>
+        <div><k>grid</k><v>0.15 Å</v></div>
+        <div><k>target 1</k><v>L4F — dropped</v></div>
+        <div><k>target 2</k><v>2-Nal — active</v></div>
+        <div><k>χ2 scan</k><v>72.6–103.9 Å³</v></div>
+        <div><k>pocket built</k><v>not yet</v></div>
+      </div>
+      <div class="pBody">
+        <div class="pText">
+          <p class="q">Can a designed pocket pick a synthetic amino acid over the canonical residue it looks like?
+            Binding on its own proves nothing. What counts is the size of the gap.</p>
+          <ul class="pts">
+            <li class="k"><b>My first target doesn't work, and the volumes show why.</b> Phenylalanine fits
+              <em>entirely inside</em> the 4-fluorophenylalanine envelope: <span class="nk">0.0 Å³</span> of it sticks
+              out. A pocket moulded to one accepts the other with no steric penalty at all.</li>
+            <li class="k">LigandMPNN had already told me this before I measured it. Sequence choice moved between the two by
+              <span class="nk">0.0034 bits</span>, against 0.60 bits for switching whole-ligand context on and off —
+              <span class="nk">180× more</span>. So LigandMPNN wasn't failing at the job. There was just no signal there to pick up.</li>
+            <li>So I switched to 2-naphthylalanine: <span class="n">6.0×</span> the surplus volume and 2.2 Å more
+              reach from CB. Worth roughly 1.2 kcal/mol, or about 10× in K<sub>d</sub>.</li>
+            <li><b>Tryptophan is the one that actually matters here.</b> I gave Trp its best shot — scanning χ2 for the
+              rotamer with maximum overlap — and it still loses on three independent counts:
+              <span class="n">19.7 Å³</span> of surplus it has to clash with, <span class="n">32.5 Å³</span> of contact
+              it can't make, and its N–H landing <span class="n">0.56 Å</span> inside the envelope, where the pocket
+              will have put apolar surface. Burying that donor costs 1–3 kcal/mol and doesn't depend on volume at all.
+              That's the term the design objective should be written around.</li>
+          </ul>
+          <div class="notshown"><b>Doesn't show</b><ul>
+            <li>no pocket built yet</li><li>RFdiffusionAA input staged, waiting on GPU time</li>
+            <li>static vdW volumes — no entropy, desolvation or induced fit</li>
+            <li>19.7 Å³ assumes zero slack, so it's an upper bound</li></ul></div>
+          <div class="pLinks">
+            <a href="https://github.com/PCtryhard/OrthCom" target="_blank" rel="noopener">Repo ↗</a>
+            <a href="https://github.com/PCtryhard/OrthCom/blob/main/PROGRESS_LOG.md" target="_blank" rel="noopener">Progress log ↗</a>
+          </div>
+        </div>
+        <div class="pFig">
+          <div class="fig"><p class="figcap">Fig. 9 — <b>why one fluorine isn't a feature.</b> Area ∝ vdW volume</p>
+            <div id="f-vol"></div></div>
+          <div class="fig"><p class="figcap">Fig. 10 — <b>2-Nal vs tryptophan</b> at Trp's best rotamer</p><div id="f-trp"></div></div>
+        </div>
+      </div>
+    </article>
+
+    <!-- ========== PLATE 04 ========== -->
+    <article class="plate rv">
+      <div class="pTop">
+        <span class="pid">04</span><h3>OrthCom-immuno</h3><span class="sp"></span>
+        <span class="chipx live">Live</span><span class="chipx arch">provisional</span>
+      </div>
+      <div class="pMeta">
+        <div><k>pairs</k><v>181 → 154</v></div>
+        <div><k>numeric IC50</k><v>61</v></div>
+        <div><k>censored</k><v>93 · &gt;40,000 nM</v></div>
+        <div><k>allele</k><v>HLA-A*02:01</v></div>
+        <div><k>predictor</k><v>NetMHCpan-4.1</v></div>
+        <div><k>schemes</k><v>2</v></div>
+        <div><k>Spearman ρ</k><v>0.807</v></div>
+      </div>
+      <div class="pBody">
+        <div class="pText">
+          <p class="q">How wrong is the shortcut everyone uses to predict whether a chemically modified peptide gets
+            presented to the immune system?</p>
+          <ul class="pts">
+            <li><b>The shortcut is to pretend the modification isn't there</b> — swap the modified residue for its
+              nearest normal one and run a standard predictor. Someone proposed it, nobody checked it against measured binding, and it stuck. So I did, on <span class="n">154</span> peptides with measured IC50s, under two
+              different mapping schemes so the answer isn't an artefact of one choice.</li>
+            <li>It ranks things fine — Spearman <span class="n">0.807</span> in log space. If all you need is to sort candidates, use it.</li>
+            <li class="k"><b>The actual numbers are a different story, and most of the time it isn't predicting anything at all.</b> In
+              <span class="nk">135 of 154</span> rows the swapped peptide comes out identical to the native one, so the
+              prediction is literally "the modification changes nothing". On the 58 of those with a measured number
+              that's within 2× twenty-eight times, 2–10× twenty times, and off by
+              <span class="nk">more than tenfold 10 times</span>.</li>
+            <li class="k">Worst single case: a chlorinated tyrosine in SHLVEALYLV. Predicted
+              <span class="n">9.79 nM</span>, measured <span class="nk">1066 nM</span>. 109× out.</li>
+          </ul>
+          <div class="notshown"><b>Doesn't show</b><ul>
+            <li>provisional — not every row hand-checked yet</li><li>n = 61 numeric rows</li>
+            <li>one allele, insulin B peptides only</li>
+            <li>these are PTMs; the synthetic residues are the real target</li>
+            <li>no structure-based score run yet</li></ul></div>
+          <div class="pLinks">
+            <a href="https://github.com/PCtryhard/orthcom-immuno" target="_blank" rel="noopener">Repo ↗</a>
+            <a href="https://github.com/PCtryhard/orthcom-immuno/blob/main/PROGRESS_LOG.md" target="_blank" rel="noopener">Progress log ↗</a>
+          </div>
+        </div>
+        <div class="pFig">
+          <div class="fig"><p class="figcap">Fig. 11 — <b>error from assuming nothing changed.</b> One square per row</p>
+            <div id="f-err"></div></div>
+          <div class="fig"><p class="figcap">Fig. 12 — <b>what the 154 rows are made of</b></p><div id="f-mods"></div></div>
+          <div class="fig"><p class="figcap">Fig. 13 — <b>the worst case</b></p><div id="f-worst"></div></div>
+        </div>
+      </div>
+    </article>
+  </div>
+</section>
+
+<!-- ======================== TRACK ======================== -->
+<section id="track">
+  <div class="wrap">
+    <div class="shead"><span class="tag">Before that</span><h2>Where I learned it</h2></div>
+    <div class="cards rv">
+      <div class="card">
+        <span class="when">Jul–Aug 2025</span>
+        <h4>Pan-Infection T Cell Atlas</h4>
+        <span class="where">Teichmann Lab, Cambridge · internship</span>
+        <p>Built a pipeline to find promiscuous pMHC binders and prioritise epitopes from single-cell data, feeding a
+          flagship immunology atlas. Worked the cleaning and analysis alongside PhD students and postdocs. That's where the MHC question in OrthCom-immuno came from.</p>
+        <div class="ft"><span>single-cell</span><span>immunology</span><span>Python</span></div>
+      </div>
+      <div class="card">
+        <span class="when">Nov 2024 – Feb 2025</span>
+        <h4>Atrazine biodegradation</h4>
+        <span class="where">GOGEC · bronze · team lead</span>
+        <p>Led the team designing a pathway to break down a toxic pesticide, down to the metabolic routes in
+          <em>Pseudomonas</em> and the real limits on gene expression. Ran the modelling, then wrote the
+          plain-language version and pitched it to the school board. Came out with a provisional funding commitment.</p>
+        <div class="ft"><span>metabolic pathways</span><a href="atrazine-biodegradation-proposal.pdf">Proposal (PDF)</a></div>
+      </div>
+      <div class="card">
+        <span class="when">Feb 2025 – 2026</span>
+        <h4>PHA bioplastics from rice husk</h4>
+        <span class="where">Bio-Engineering Club · cofounder</span>
+        <p>Started my school's first bio-engineering club and led a project engineering bacteria with recombinant
+          plasmids to turn agricultural waste into biodegradable PHA. Got the design about 80% done and stopped. The club is still running even though the project isn't.</p>
+        <div class="ft"><span>synthetic bio</span><span>paused at 80%</span></div>
+      </div>
+      <div class="card">
+        <span class="when">IB Extended Essay</span>
+        <h4>Neural signalling in menopause</h4>
+        <span class="where">Independent · survey + analysis</span>
+        <p>Designed and ran a survey, then analysed it to connect what people reported during menopause to shifts in
+          the underlying neural signalling. First project where the writing mattered as much as the result.</p>
+        <div class="ft"><span>neuroscience</span><a href="brains-affected-by-menopause-and-estrogen.pdf">Essay (PDF)</a></div>
+      </div>
+      <div class="card">
+        <span class="when">Mar–Sep 2025</span>
+        <h4>UWC Science Collective</h4>
+        <span class="where">Lead organiser</span>
+        <p>Co-ran an international virtual science conference — 500+ sign-ups, speakers from Harvard and MIT — plus a
+          mentorship programme pairing PhD researchers with high-school and undergrad students.</p>
+        <div class="ft"><span>500+ sign-ups</span><span>mentorship</span></div>
+      </div>
+      <div class="card">
+        <span class="when">2023</span>
+        <h4>Maths</h4>
+        <span class="where">NABOJ Switzerland · ETH Youth Math Academy</span>
+        <p>First in my age group at NABOJ Switzerland. At the ETH Youth Math Academy I helped get the programme
+          permanent funding, which is the part that actually mattered.</p>
+        <div class="ft"><span>1st, age group</span><span>ETH</span></div>
       </div>
     </div>
   </div>
 </section>
 
-<section id="work">
+<!-- ======================== FIELD ======================== -->
+<section id="field">
   <div class="wrap">
-    <div class="sec-head">
-      <span class="sec-num">02</span>
-      <h2 class="sec-title">Selected work</h2>
-      <p class="sec-sub">Research, synthetic biology, and conservation. Filter by area below.</p>
-    </div>
-    <div class="filters" id="filters">
-      <button class="chip on" data-f="all">All</button>
-      <button class="chip" data-f="protein">Protein &amp; ML</button>
-      <button class="chip" data-f="bioinfo">Bioinformatics</button>
-      <button class="chip" data-f="synbio">Synthetic biology</button>
-      <button class="chip" data-f="conservation">Conservation</button>
-      <button class="chip" data-f="neuro">Neuroscience</button>
-    </div>
-    <div class="proj-grid" id="grid">
-
-      <article class="proj" data-cat="protein">
-        <div class="proj-top">
-          <h3>Zero-shot Anti-CRISPR Discovery</h3>
-          <span class="proj-when">Apr–Nov 2025</span>
-        </div>
-        <div class="proj-role">Independent research · Yau Science Competition</div>
-        <p>Taught myself to apply zero-shot machine learning and metagenomic mining to identify candidate anti-CRISPR (Acr) protein families across large sequence datasets, surfacing families without relying on labelled training examples.</p>
-        <div class="tags"><span class="tag">zero-shot ML</span><span class="tag">ESM-2</span><span class="tag">metagenomics</span></div>
-        <a class="proj-link" href="anti-crispr-zero-shot-paper.pdf" target="_blank" rel="noopener">Read the paper →</a>
-      </article>
-
-      <article class="proj" data-cat="bioinfo">
-        <div class="proj-top">
-          <h3>Pan-Infection T Cell Atlas pMHC pipeline</h3>
-          <span class="proj-when">Jul–Aug 2025</span>
-        </div>
-        <div class="proj-role">Teichmann Lab, Cambridge · Internship</div>
-        <p>Built a bioinformatics pipeline to identify promiscuous pMHC binders and prioritize epitopes from single-cell data, contributing to a flagship immunology atlas. Worked alongside PhD students and postdocs on cleaning, analysis, and interpretation.</p>
-        <div class="tags"><span class="tag">single-cell</span><span class="tag">immunology</span><span class="tag">Python</span></div>
-      </article>
-
-      <article class="proj" data-cat="synbio">
-        <div class="proj-top">
-          <h3>PHA Bioplastics from Rice Husk</h3>
-          <span class="proj-when">Feb 2025–2026</span>
-        </div>
-        <div class="proj-role">Bio-Engineering Club · Cofounder &amp; Lead</div>
-        <p>Founded my school's first Bio-Engineering Club and led a synthetic biology project engineering bacteria with recombinant plasmids to turn rice husk, an agricultural waste product, into biodegradable PHA bioplastics. We took the design roughly 80% of the way before pausing, and learned a lot building it.</p>
-        <div class="tags"><span class="tag">synthetic bio</span><span class="tag">recombinant plasmids</span><span class="tag">team lead</span></div>
-      </article>
-
-      <article class="proj" data-cat="synbio">
-        <div class="proj-top">
-          <h3>Pesticide Biodegradation Proposal</h3>
-          <span class="proj-when">Nov 2024–Feb 2025</span>
-        </div>
-        <div class="proj-role">GOGEC · Bronze Medallist · Team Lead</div>
-        <p>Led a team designing a proposal to biodegrade a toxic pesticide, digging into metabolic pathways in Pseudomonas and the real constraints of gene expression. Earned a bronze medal at GOGEC. I also led the modeling and built a plain-language explanation of the atrazine breakdown, then pitched it to the school board, a non-technical room, and won a provisional funding commitment.</p>
-        <div class="tags"><span class="tag">metabolic pathways</span><span class="tag">Pseudomonas</span><span class="tag">bronze medal</span></div>
-        <a class="proj-link" href="atrazine-biodegradation-proposal.pdf" target="_blank" rel="noopener">Read the proposal →</a>
-      </article>
-
-      <article class="proj" data-cat="conservation">
-        <div class="proj-top">
-          <h3>Golden Snail Invasive Removal</h3>
-          <span class="proj-when">2023–2026</span>
-        </div>
-        <div class="proj-role">Sustainability Club · Field research with villages</div>
-        <p>When invasive golden snails began spreading through the waterways local farmers depend on, we surveyed the affected areas alongside residents, documented the spread, and built a case strong enough to partner with the local government. The snails were removed and the waterways recovered.</p>
-        <div class="tags"><span class="tag">fieldwork</span><span class="tag">gov partnership</span><span class="tag">invasive species</span></div>
-      </article>
-
-      <article class="proj" data-cat="conservation">
-        <div class="proj-top">
-          <h3>Textile Water Pollution Investigation</h3>
-          <span class="proj-when">2024–2025</span>
-        </div>
-        <div class="proj-role">Sustainability Club · Lead</div>
-        <p>Launched an investigation into water pollution linked to nearby textile manufacturing, pairing field sampling with honest conversations in the affected communities to understand what was actually reaching the water.</p>
-        <div class="tags"><span class="tag">field sampling</span><span class="tag">community</span><span class="tag">environmental</span></div>
-      </article>
-
-      <article class="proj" data-cat="conservation">
-        <div class="proj-top">
-          <h3>Inter-school Energy Reduction</h3>
-          <span class="proj-when">2023–2026</span>
-        </div>
-        <div class="proj-role">Sustainability Club · Organizer</div>
-        <p>Ran inter-school competitions that measurably cut campus electricity consumption, and hosted weekly events promoting sustainable resource use. I also campaigned to change unsustainable campus building practices to protect the 72 bird species recorded on our campus.</p>
-        <div class="tags"><span class="tag">organizing</span><span class="tag">sustainability</span><span class="tag">advocacy</span></div>
-      </article>
-
-      <article class="proj" data-cat="bioinfo">
-        <div class="proj-top">
-          <h3>UWC Science Collective</h3>
-          <span class="proj-when">Mar–Sep 2025</span>
-        </div>
-        <div class="proj-role">Lead Organizer</div>
-        <p>Co-organized an international virtual science conference that drew 500+ sign-ups and speakers from Harvard, MIT and beyond, and helped run a mentorship program pairing PhD researchers with high school and undergraduate students.</p>
-        <div class="tags"><span class="tag">500+ attendees</span><span class="tag">mentorship</span><span class="tag">education</span></div>
-      </article>
-
-      <article class="proj" data-cat="neuro">
-        <div class="proj-top">
-          <h3>Neural Signaling in Menopause</h3>
-          <span class="proj-when">IB Extended Essay</span>
-        </div>
-        <div class="proj-role">Independent research · survey + data analysis</div>
-        <p>Designed and ran a survey, then analyzed the data to explore how neural signaling pathways shift during menopause, working to link self-reported experience to the underlying biology. A fully cited, end-to-end research project from question to analysis.</p>
-        <div class="tags"><span class="tag">neuroscience</span><span class="tag">survey design</span><span class="tag">data analysis</span></div>
-        <a class="proj-link" href="brains-affected-by-menopause-and-estrogen.pdf" target="_blank" rel="noopener">Read the essay →</a>
-      </article>
-
-    </div>
-  </div>
-</section>
-
-<section id="explorations">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="sec-num">03</span>
-      <h2 class="sec-title">Explorations</h2>
-      <p class="sec-sub">Higher-risk personal R&amp;D. Both are active, and in both the most useful result so far is a measurement that went against what I wanted.</p>
-    </div>
-    <p class="explain">These are the two projects where I built the de novo protein-design and structural-modeling stack myself. Both are active. In each one the strongest thing I have is a corrective or negative result rather than a win, and <strong>I would rather show a number that closed a door than a claim I cannot support.</strong></p>
-    <div class="proj-grid">
-
-      <article class="proj">
-        <div class="proj-top">
-          <h3>OrthCom-immuno</h3>
-          <span class="status live">Live</span>
-        </div>
-        <div class="proj-role">Personal research · methods &amp; validation</div>
-        <p>Measures how wrong it is to predict a chemically modified peptide's MHC-I binding by swapping the modified residue for its nearest canonical one and running a standard predictor. That swap is the field's current shortcut and had never been checked against measured binding. Against 154 PTM-modified HLA-A*02:01 peptides with known IC50s it holds rank order well (Spearman 0.81), but in 135 of those rows it reduces to asserting the modification changes nothing at all, and on the 58 of those with a measured value it is off by more than tenfold in 10 cases. Next is scoring the real modified residue structurally, on an RDKit conformer plus Psi4 DFT core.</p>
-        <div class="tags"><span class="tag">MHC-I</span><span class="tag">ncAA</span><span class="tag">NetMHCpan-4.1</span><span class="tag">RDKit / Psi4 DFT</span></div>
-      </article>
-
-      <article class="proj">
-        <div class="proj-top">
-          <h3>OrthCom</h3>
-          <span class="status live">Live</span>
-        </div>
-        <div class="proj-role">Personal research · de novo design</div>
-        <p>Designs a pocket that binds the non-canonical amino acid 2-naphthylalanine more tightly than the canonical aromatics it resembles, and measures the gap. My first target was 4-fluorophenylalanine and I dropped it on the evidence: one para-fluorine shifts LigandMPNN's sequence choice by 0.0034 bits, and in volume it adds only 6.7 Å<sup>3</sup> with zero steric exclusion, worth roughly 0.2 kcal/mol. 2-Naphthylalanine carries six times that surplus. The decisive comparison is tryptophan rather than phenylalanine, because a pocket shaped for 2-naphthylalanine buries indole's N-H donor unsatisfied. No pocket designed yet; the cloud package is staged and waiting on GPU time.</p>
-        <div class="tags"><span class="tag">RFdiffusionAA</span><span class="tag">LigandMPNN</span><span class="tag">AF2-multimer</span></div>
-      </article>
-
-    </div>
-  </div>
-</section>
-
-<section id="toolkit">
-  <div class="wrap">
-    <div class="sec-head">
-      <span class="sec-num">04</span>
-      <h2 class="sec-title">Toolkit</h2>
-      <p class="sec-sub">What I can open and start working in without a tutorial.</p>
-    </div>
-    <div class="tool-grid">
-      <div class="tool">
-        <h4><span class="dot"></span>Protein &amp; structure</h4>
-        <ul>
-          <li>AlphaFold</li>
-          <li>ESM-2</li>
-          <li>ProteinMPNN</li>
-          <li>RFdiffusion</li>
-        </ul>
+    <div class="shead"><span class="tag">Field work</span><h2>Three years outdoors</h2></div>
+    <p class="sintro">The rest of this page is computational. This part I did outside. Three years running conservation work with the
+      villages around my school in Changshu.</p>
+    <div class="fieldGrid rv">
+      <div class="fcard">
+        <span class="when">2023–2026 · club lead</span>
+        <h4>Golden snails, removed</h4>
+        <p>Invasive golden apple snails were spreading through the waterways the local farmers depend on. We surveyed
+          the area with residents, documented the spread, and built a case good enough to bring the local government
+          in as a partner. <span class="g">The snails were removed and the waterways recovered.</span></p>
       </div>
-      <div class="tool">
-        <h4><span class="dot"></span>Data &amp; ML</h4>
-        <ul>
-          <li>Python</li>
-          <li>pandas / NumPy</li>
-          <li>Matplotlib</li>
-          <li>zero-shot methods</li>
-        </ul>
+      <div class="fcard">
+        <span class="when">2024–2025 · lead</span>
+        <h4>Textile water pollution</h4>
+        <p>Opened an investigation into water pollution from nearby textile manufacturing. Field sampling plus a lot of
+          time talking to the people living with it, to find out what was actually reaching the water rather than what
+          the permits said.</p>
       </div>
-      <div class="tool">
-        <h4><span class="dot"></span>Bioinformatics</h4>
-        <ul>
-          <li>Pipeline design</li>
-          <li>Sequence analysis</li>
-          <li>Single-cell data</li>
-          <li>Scientific writing</li>
-        </ul>
-      </div>
-      <div class="tool">
-        <h4><span class="dot"></span>AI workflows</h4>
-        <ul>
-          <li>Claude (daily use)</li>
-          <li>LLM-assisted analysis</li>
-          <li>Research automation</li>
-          <li>Data visualization</li>
-        </ul>
-      </div>
-      <div class="tool">
-        <h4><span class="dot"></span>Organizing</h4>
-        <ul>
-          <li>Program coordination</li>
-          <li>Stakeholder partnership</li>
-          <li>Event &amp; conference ops</li>
-          <li>Teaching &amp; mentoring</li>
-        </ul>
-      </div>
-      <div class="tool">
-        <h4><span class="dot"></span>Languages</h4>
-        <ul>
-          <li>English (native)</li>
-          <li>German (native)</li>
-          <li>Bulgarian (fluent)</li>
-          <li>Mandarin / French (basic)</li>
-        </ul>
+      <div class="fcard">
+        <span class="when">2023–2026 · organiser</span>
+        <h4>Campus, measurably quieter</h4>
+        <p>Ran inter-school competitions that cut campus electricity use, and pushed to change building practices on a
+          campus with <span class="g">72 recorded bird species</span>. Bird-safe construction went through the College
+          Council, where I sat for two years.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section id="impact">
+<!-- ======================== STACK ======================== -->
+<section id="stack">
   <div class="wrap">
-    <div class="sec-head">
-      <span class="sec-num">05</span>
-      <h2 class="sec-title">Leadership &amp; impact</h2>
-      <p class="sec-sub">Where I have led teams, taught, and shipped things that outlived me.</p>
-    </div>
-    <div class="tl">
-      <div class="tl-item">
-        <div class="tl-when">2023–2026 · 3 years</div>
-        <h4>Sustainability Club, Lead</h4>
-        <p>Led field conservation with local villages, partnered with government to remove invasive species, investigated industrial water pollution, and ran campus campaigns that cut electricity use and protected bird habitats.</p>
+    <div class="shead"><span class="tag">Stack</span><h2>What I actually use</h2></div>
+    <div class="tiers rv">
+      <div class="tier">
+        <div class="th">Every week</div>
+        <div class="tl">
+          <span>RFdiffusion / RFD3</span><span>LigandMPNN</span><span>Boltz-2</span><span>ESM-2</span>
+          <span>AF2-multimer</span><span>NetMHCpan-4.1</span><span>Python</span><span>NumPy / pandas</span>
+          <span>scikit-learn</span><span>SLURM on Euler</span><span>sqlite</span><span>pytest</span>
+        </div>
       </div>
-      <div class="tl-item">
-        <div class="tl-when">2024–2026 · 2 years</div>
-        <h4>College Council (Student Council), Leader</h4>
-        <p>Represented the student body, championed bird-safe sustainable construction on campus, and pushed for clearer process management within the school's faculty.</p>
+      <div class="tier">
+        <div class="th">Used properly at least once</div>
+        <div class="tl">
+          <span>RFdiffusionAA</span><span>RDKit</span><span>Psi4</span><span>AmberTools / RESP</span>
+          <span>BLASTp / phmmer</span><span>single-cell pipelines</span><span>Apptainer</span><span>Matplotlib</span>
+        </div>
       </div>
-      <div class="tl-item">
-        <div class="tl-when">Feb 2025–2026</div>
-        <h4>Bio-Engineering Club, Cofounder &amp; Lead</h4>
-        <p>Founded the school's first synthetic biology club and lead its flagship bioplastics-from-waste project into international competition.</p>
+      <div class="tier say">
+        <div class="th">How I run things</div>
+        <div class="tl">
+          <span>Freeze the folds before you let a model near them.</span>
+          <span>Run the noise control first. If the score can't tell two designs apart, the search isn't doing anything.</span>
+          <span>Write down what you got wrong and leave it there. My logs have retractions in them on purpose.</span>
+          <span>A missing number raises. It never quietly becomes 0.0.</span>
+        </div>
       </div>
-      <div class="tl-item">
-        <div class="tl-when">2023</div>
-        <h4>Mathematics</h4>
-        <p>1st place (age group) at 2023 NABOJ Switzerland; ETH Youth Math Academy, where I helped secure permanent program funding.</p>
+      <div class="tier say">
+        <div class="th">Other things that come up</div>
+        <div class="tl">
+          <span>English and German native, Bulgarian fluent, some Mandarin and French.</span>
+          <span>Spent the same year working with village farmers and with Cambridge postdocs, and had to be understood by both.</span>
+          <span>Ran a conference with 500+ sign-ups and a mentorship programme alongside it.</span>
+          <span>Pitched a synthetic biology project to a school board with no biologists in the room and got funded.</span>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="contact" id="contact">
+<!-- ======================== CONTACT ======================== -->
+<section id="contact">
   <div class="wrap">
-    <h2>Let's build something<br>that <span class="accent">matters</span>.</h2>
-    <p>I am looking for places to put data-driven biology and AI to work on real-world problems. If that sounds like your corner of the world, reach out.</p>
-    <div class="contact-links">
-      <a href="mailto:maximilian.alexandrov@hotmail.com" class="btn btn-primary">Email me →</a>
-      <a href="https://www.linkedin.com/in/max-alexandrov-89501a2a4/" class="btn btn-ghost" target="_blank" rel="noopener">LinkedIn</a>
+    <div class="shead"><span class="tag">Contact</span></div>
+    <h2 style="margin-top:14px">Looking for<br>the next one</h2>
+    <p class="sintro" style="margin-top:22px">Looking for research or engineering work in computational biology, ideally somewhere I get to run
+      things end to end. Just graduated from UWC Changshu China, based in Zürich.</p>
+    <div class="cRow">
+      <a class="btn pri" href="mailto:maximilian.alexandrov@hotmail.com">maximilian.alexandrov@hotmail.com</a>
+      <a class="btn" href="https://github.com/PCtryhard" target="_blank" rel="noopener">GitHub ↗</a>
+      <a class="btn" href="https://www.linkedin.com/in/max-alexandrov-89501a2a4/" target="_blank" rel="noopener">LinkedIn ↗</a>
     </div>
   </div>
 </section>
 
-<footer>
-  <div class="wrap foot-in">
-    <span>© 2026 Max Alexandrov</span>
-    <span class="mono">designed &amp; built end to end</span>
-  </div>
-</footer>
+<footer><div class="wrap"><div class="fRow">
+  <span>© 2026 Maximilian Alexandrov</span>
+  <span>Figures built from the CSVs in the repos above</span>
+  <span>Zürich · CH</span>
+</div></div></footer>
 
+<script src="data.js"></script>
 <script>
-  // project filtering
-  const chips=document.querySelectorAll('.chip');
-  const cards=document.querySelectorAll('#grid .proj');
-  chips.forEach(c=>c.addEventListener('click',()=>{
-    chips.forEach(x=>x.classList.remove('on'));
-    c.classList.add('on');
-    const f=c.dataset.f;
-    cards.forEach(card=>{
-      const show=(f==='all'||card.dataset.cat===f);
-      card.classList.toggle('hide',!show);
-    });
-  }));
+/* ===================================================================
+   Figures. Every array comes from data.js, which is generated from the
+   result CSVs in the repositories — nothing here is illustrative.
+   =================================================================== */
+var NS='http://www.w3.org/2000/svg';
+function S(tag,a,kids){var e=document.createElementNS(NS,tag);
+  for(var k in a) if(a[k]!=null) e.setAttribute(k,a[k]);
+  (kids||[]).forEach(function(c){e.appendChild(typeof c==='string'?document.createTextNode(c):c)});
+  return e;}
+function T(x,y,txt,a){var o={x:x,y:y,'font-size':8}; for(var k in (a||{})) o[k]=a[k];
+  return S('text',o,[String(txt)]);}
+function tip(t){return S('title',{},[t])}
+function mount(id,w,h,kids){var host=document.getElementById(id); if(!host) return;
+  host.innerHTML=''; host.appendChild(S('svg',{viewBox:'0 0 '+w+' '+h,role:'img'},kids));}
+function ramp(t){ // deep blue -> cyan -> yellow -> orange
+  var st=[[0,[26,32,60]],[.28,[40,86,190]],[.52,[69,214,232]],[.78,[255,210,63]],[1,[255,125,69]]];
+  t=Math.max(0,Math.min(1,t));
+  for(var i=0;i<st.length-1;i++){ var a=st[i],b=st[i+1];
+    if(t>=a[0]&&t<=b[0]){ var f=b[0]===a[0]?0:(t-a[0])/(b[0]-a[0]);
+      return 'rgb('+a[1].map(function(c,k){return Math.round(c+(b[1][k]-c)*f)}).join(',')+')'; } }
+  return '#fff';}
 
-  // scroll-driven translation: ribosome tracks the mRNA 5'->3', the polypeptide
-  // emerges from the large subunit and elongates one amino acid per codon
-  (function(){
-    const rail = document.querySelector('.transrail');
-    if(!rail) return;
-    const SVGNS = 'http://www.w3.org/2000/svg';
-    const codons   = rail.querySelector('.codons');
-    const beadsG   = document.getElementById('pepBeads');
-    const backbone = document.getElementById('pepBackbone');
-    const ribo     = document.getElementById('riboGrp');
-    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+(function(){
+var D=window.D; if(!D) return;
 
-    const TOP = 44, BOT = 958;      // ribosome travel range along the mRNA
-    const SPACING = 36;             // mRNA advances one codon -> one amino acid
-    const exitX = 33, amp = 9;      // nascent chain weaves out of the exit tunnel
+/* ---- Fig 1: branch rates, as proportional flow bars ---- */
+(function(){
+  var w=320,h=176,x0=66,x1=306,k=[];
+  var maxN=660, maxR=45;
+  D.branches.forEach(function(b,i){
+    var y=18+i*52, bw=(x1-x0)*b[2]/maxN, fw=bw*b[3]/b[2];
+    k.push(T(x0-6,y+11,b[0],{'text-anchor':'end',fill:'#eef0f7','font-size':9}));
+    k.push(T(x0-6,y+21,b[4]+'%',{'text-anchor':'end',fill:['#8b94ab','#45d6e8','#4d8bff'][i],'font-size':11,'font-weight':600}));
+    k.push(S('rect',{x:x0,y:y,width:bw,height:17,fill:'rgba(140,165,220,.13)'},[tip(b[2]+' designs from '+b[1])]));
+    k.push(S('rect',{x:x0,y:y,width:Math.max(fw,1.5),height:17,fill:['#8b94ab','#45d6e8','#4d8bff'][i]},
+      [tip(b[3]+' of '+b[2]+' cleared the gate — '+b[4]+'%')]));
+    k.push(T(x0+bw+5,y+12,b[2],{'font-size':8,fill:'#5c6377'}));
+    k.push(T(x0,y+31,b[3]+' cleared · '+b[1],{'font-size':7.5,fill:'#5c6377'}));
+  });
+  k.push(S('line',{x1:x0,y1:170,x2:x1,y2:170,stroke:'rgba(140,165,220,.25)'}));
+  k.push(T(x0,165,'bar width = designs generated · filled = cleared',{'font-size':7.5,fill:'#5c6377'}));
+  mount('f-branch',w,h,k);
+})();
 
-    // one codon tick + one (initially hidden) amino acid per step
-    const ys = [];
-    for(let y = TOP; y <= BOT; y += SPACING) ys.push(y);
-    const beads = ys.map((y, i) => {
-      const tick = document.createElementNS(SVGNS, 'line');
-      tick.setAttribute('class', 'codon');
-      tick.setAttribute('x1', 47); tick.setAttribute('x2', 57);
-      tick.setAttribute('y1', y);  tick.setAttribute('y2', y);
-      codons.appendChild(tick);
-      const x = exitX + amp * Math.sin(i * 0.95);
-      const c = document.createElementNS(SVGNS, 'circle');
-      c.setAttribute('class', 'aa');
-      c.setAttribute('cx', x); c.setAttribute('cy', y); c.setAttribute('r', 3.5);
-      c.style.opacity = 0;
-      beadsG.appendChild(c);
-      return { el: c, x, y };
-    });
+/* ---- Fig 2: noise ratios, lollipop against the useless line ---- */
+(function(){
+  var w=320,h=150,x0=96,x1=288,k=[];
+  k.push(S('line',{x1:x1,y1:6,x2:x1,y2:124,stroke:'#ff2e9a','stroke-dasharray':'3 3'}));
+  k.push(T(x1,136,'1.0 = useless',{'text-anchor':'end',fill:'#ff2e9a','font-size':7.5}));
+  k.push(S('line',{x1:x0,y1:6,x2:x0,y2:124,stroke:'rgba(140,165,220,.3)'}));
+  D.noise.forEach(function(n,i){
+    var y=16+i*22, x=x0+(x1-x0)*n[3], bad=n[3]>=0.75;
+    var col=n[3]>=0.9?'#ff2e9a':(bad?'#ff7d45':'#45d6e8');
+    k.push(S('line',{x1:x0,y1:y,x2:x,y2:y,stroke:col,'stroke-width':1.5,opacity:.55}));
+    k.push(S('circle',{cx:x,cy:y,r:4,fill:col},
+      [tip(n[0]+': noise floor '+n[1]+n[4]+' vs between-design spread '+n[2]+n[4]+' — ratio '+n[3])]));
+    k.push(T(x0-7,y+3,n[0],{'text-anchor':'end','font-size':8,fill:bad?'#eef0f7':'#8b94ab'}));
+    k.push(T(x+8,y+3,n[3].toFixed(2),{'font-size':8,fill:col}));
+  });
+  mount('f-noise',w,h,k);
+})();
 
-    function render(prog){
-      const ribY = TOP + (BOT - TOP) * prog;
-      ribo.setAttribute('transform', `translate(0,${ribY})`);
-      // residues already past the ribosome's exit are synthesized; newest is nearest
-      const pts = [];
-      beads.forEach(b => {
-        const vis = b.y <= ribY + 0.5;
-        b.el.style.opacity = vis ? 1 : 0;
-        b.el.setAttribute('class', (vis && b.y > ribY - SPACING) ? 'aa aa-new' : 'aa');
-        if(vis) pts.push(`${b.x},${b.y}`);
-      });
-      if(pts.length) pts.push(`${exitX - 3},${(ribY - 8).toFixed(1)}`); // exit tunnel
-      backbone.setAttribute('points', pts.join(' '));
+/* ---- Fig 3: unit chart, one square per design ---- */
+(function(){
+  var w=640,P=7,SZ=5.4,k=[],y=16,cols=Math.floor((w-6)/P);
+  D.branches.forEach(function(b,gi){
+    var dim=['rgba(140,165,220,.16)','rgba(69,214,232,.17)','rgba(77,139,255,.19)'][gi];
+    var hot=['#8b94ab','#45d6e8','#4d8bff'][gi];
+    k.push(S('text',{x:0,y:y-4,'font-size':8.5,fill:hot,'letter-spacing':'.09em'},
+      [b[0].toUpperCase()+'  ', S('tspan',{fill:'#5c6377'},[b[2]+' designs · '+b[1]+' · ']),
+       S('tspan',{'font-weight':600},[b[3]+' cleared  '+b[4]+'%'])]));
+    for(var i=0;i<b[2];i++){
+      var r=Math.floor(i/cols), c=i%cols;
+      k.push(S('rect',{x:c*P,y:y+r*P,width:SZ,height:SZ,fill:i<b[3]?hot:dim,rx:.8},
+        i===0?[tip(b[3]+' of '+b[2]+' '+b[0]+' designs cleared the gate')]:null));
     }
+    y+=Math.ceil(b[2]/cols)*P+24;
+  });
+  k.push(T(0,y-2,'1,122 squares · 142 filled · filled squares drawn first in each block',{'font-size':8,fill:'#5c6377'}));
+  mount('f-units',w,y+6,k);
+})();
 
-    if(reduce){ render(1); return; }
-    render(0);
-    let ticking = false;
-    function update(){
-      const max = document.documentElement.scrollHeight - window.innerHeight;
-      const prog = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
-      render(prog);
-      ticking = false;
+/* ---- Fig 4: slopegraph, 1 cycle vs 3 cycles ---- */
+(function(){
+  var w=300,h=200,xa=78,xb=210,k=[],lo=0.2,hi=0.92;
+  function Y(v){return 20+(160*(1-(v-lo)/(hi-lo)))}
+  k.push(S('line',{x1:xa,y1:14,x2:xa,y2:186,stroke:'rgba(140,165,220,.25)'}));
+  k.push(S('line',{x1:xb,y1:14,x2:xb,y2:186,stroke:'rgba(140,165,220,.25)'}));
+  k.push(T(xa,200,'1 cycle',{'text-anchor':'middle','font-size':8}));
+  k.push(T(xb,200,'3 cycles',{'text-anchor':'middle','font-size':8}));
+  // push overlapping labels apart so eleven variants stay readable
+  function dodge(vals,min){
+    var o=vals.map(function(v,i){return {i:i,y:v}}).sort(function(a,b){return a.y-b.y});
+    for(var p=1;p<o.length;p++) if(o[p].y-o[p-1].y<min) o[p].y=o[p-1].y+min;
+    var out=[]; o.forEach(function(e){out[e.i]=e.y}); return out;
+  }
+  var la=dodge(D.depth.map(function(d){return Y(d[1])}),8.4);
+  var lb=dodge(D.depth.map(function(d){return Y(d[2])}),8.4);
+  D.depth.forEach(function(d,i){
+    var up=d[2]>d[1], col=up?'#45d6e8':'#ff2e9a';
+    k.push(S('line',{x1:xa,y1:Y(d[1]),x2:xb,y2:Y(d[2]),stroke:col,'stroke-width':1.3,opacity:up?.85:.6},
+      [tip('variant '+d[0]+': '+d[1].toFixed(4)+' → '+d[2].toFixed(4)+'   ('+d[3]+'/'+d[4]+' → '+d[5]+'/'+d[6]+' scored)')]));
+    k.push(S('circle',{cx:xa,cy:Y(d[1]),r:2.2,fill:col}));
+    k.push(S('circle',{cx:xb,cy:Y(d[2]),r:2.2,fill:col}));
+    // leaders from the dot to its dodged label
+    k.push(S('line',{x1:xa-4,y1:Y(d[1]),x2:xa-13,y2:la[i],stroke:col,opacity:.3,'stroke-width':.7}));
+    k.push(S('line',{x1:xb+4,y1:Y(d[2]),x2:xb+13,y2:lb[i],stroke:col,opacity:.3,'stroke-width':.7}));
+    k.push(T(xa-15,la[i]+2.5,d[0]+' '+d[1].toFixed(2),{'text-anchor':'end','font-size':7,fill:'#8b94ab'}));
+    k.push(T(xb+15,lb[i]+2.5,d[2].toFixed(2),{'font-size':7,fill:col}));
+  });
+  k.push(T(0,12,'best score per variant · cyan = improved',{'font-size':7.5,fill:'#5c6377'}));
+  mount('f-slope',w,h,k);
+})();
+
+/* ---- Fig 5: scaling curve with area fill ---- */
+(function(){
+  var w=300,h=186,k=[],x0=42,x1=286,y0=18,y1=140;
+  var lp=D.scaling.map(function(s){return Math.log10(s[1])});
+  var plo=Math.min.apply(0,lp)-.2, phi=Math.max.apply(0,lp)+.2;
+  function X(p){return x0+(x1-x0)*(p-plo)/(phi-plo)}
+  function Y(v,a,b){return y0+(y1-y0)*(1-(v-a)/(b-a))}
+  var gid='g1';
+  k.push(S('defs',{},[S('linearGradient',{id:gid,x1:0,y1:0,x2:0,y2:1},[
+    S('stop',{offset:'0%','stop-color':'#4d8bff','stop-opacity':.42}),
+    S('stop',{offset:'100%','stop-color':'#4d8bff','stop-opacity':0})])]));
+  [0,1,2,3].forEach(function(i){k.push(S('line',{x1:x0,y1:y0+i*30,x2:x1,y2:y0+i*30,stroke:'rgba(140,165,220,.12)'}))});
+  var au=D.scaling.map(function(s,i){return [X(lp[i]),Y(s[2],.73,.85)]});
+  var ap=D.scaling.map(function(s,i){return [X(lp[i]),Y(s[3],.25,.45)]});
+  k.push(S('path',{d:'M '+au.map(function(p){return p[0]+' '+p[1]}).join(' L ')+' L '+au[au.length-1][0]+' '+y1+' L '+au[0][0]+' '+y1+' Z',fill:'url(#'+gid+')'}));
+  k.push(S('path',{d:'M '+au.map(function(p){return p[0].toFixed(1)+' '+p[1].toFixed(1)}).join(' L '),fill:'none',stroke:'#4d8bff','stroke-width':2}));
+  k.push(S('path',{d:'M '+ap.map(function(p){return p[0].toFixed(1)+' '+p[1].toFixed(1)}).join(' L '),fill:'none',stroke:'#ffd23f','stroke-width':2,'stroke-dasharray':'4 3'}));
+  D.scaling.forEach(function(s,i){
+    var peak=s[0]==='650M';
+    k.push(S('circle',{cx:au[i][0],cy:au[i][1],r:peak?4.6:3,fill:'#4d8bff',stroke:peak?'#eef0f7':null,'stroke-width':peak?1.4:null},
+      [tip(s[0]+' — AUROC '+s[2]+', best layer '+s[4]+' of '+s[5])]));
+    k.push(S('circle',{cx:ap[i][0],cy:ap[i][1],r:peak?4.6:3,fill:'#ffd23f',stroke:peak?'#eef0f7':null,'stroke-width':peak?1.4:null},
+      [tip(s[0]+' — AP '+s[3])]));
+    k.push(T(au[i][0],154,s[0],{'text-anchor':'middle','font-size':8,fill:peak?'#eef0f7':'#8b94ab'}));
+  });
+  var px=X(lp[3]);
+  k.push(S('line',{x1:px,y1:12,x2:px,y2:y1,stroke:'#eef0f7','stroke-dasharray':'2 3',opacity:.35}));
+  k.push(T(px,9,'peak',{'text-anchor':'middle','font-size':8,fill:'#eef0f7'}));
+  k.push(S('path',{d:'M '+(px+10)+' 26 Q '+(px+34)+' 20 '+(X(lp[4])-6)+' '+(au[4][1]-8),fill:'none',stroke:'#ff2e9a','stroke-width':1,'stroke-dasharray':'2 2'}));
+  k.push(T(X(lp[4])+4,au[4][1]-10,'3B is worse',{'font-size':7.5,fill:'#ff2e9a','text-anchor':'end'}));
+  k.push(T(x0,176,'— AUROC',{'font-size':8,fill:'#4d8bff'}));
+  k.push(T(x0+62,176,'-- avg. precision',{'font-size':8,fill:'#ffd23f'}));
+  mount('f-scaling',w,h,k);
+})();
+
+/* ---- Fig 6: method dot plot ---- */
+(function(){
+  var w=320,h=126,x0=118,x1=300,k=[],max=.46;
+  function X(v){return x0+(x1-x0)*v/max}
+  k.push(S('line',{x1:X(D.chance),y1:4,x2:X(D.chance),y2:112,stroke:'#ff2e9a','stroke-dasharray':'3 3'}));
+  k.push(T(X(D.chance),122,'chance 0.091',{'text-anchor':'middle','font-size':7.5,fill:'#ff2e9a'}));
+  D.methods.forEach(function(m,i){
+    var y=12+i*15, col=m[3]>0?'#4d8bff':(m[3]<0?'#ff2e9a':'#45d6e8');
+    k.push(S('line',{x1:x0,y1:y,x2:X(m[1]),y2:y,stroke:col,opacity:.4,'stroke-width':1.3}));
+    k.push(S('circle',{cx:X(m[1]),cy:y,r:m[3]>0?4.4:3.2,fill:col},[tip(m[0]+' — AP '+m[1]+', AUROC '+m[2])]));
+    k.push(T(x0-7,y+3,m[0],{'text-anchor':'end','font-size':7.5,fill:m[3]>0?'#eef0f7':'#8b94ab'}));
+    k.push(T(X(m[1])+8,y+3,m[1].toFixed(3),{'font-size':7.5,fill:col}));
+  });
+  mount('f-methods',w,h,k);
+})();
+
+/* ---- Fig 7: ragged heatmap, every layer of every model ---- */
+(function(){
+  var order=['8M','35M','150M','650M','3B'],w=640,x0=54,x1=606,rh=22,gap=6,k=[];
+  var all=[]; order.forEach(function(s){all=all.concat(D.layers[s])});
+  var lo=Math.min.apply(0,all), hi=Math.max.apply(0,all);
+  order.forEach(function(s,ri){
+    var v=D.layers[s], n=v.length, cw=(x1-x0)/n, y=16+ri*(rh+gap), best=0;
+    v.forEach(function(a,i){ if(a>v[best]) best=i; });
+    v.forEach(function(a,i){
+      k.push(S('rect',{x:(x0+i*cw).toFixed(1),y:y,width:(cw+.4).toFixed(2),height:rh,fill:ramp((a-lo)/(hi-lo))},
+        [tip(s+'  layer '+i+' of '+(n-1)+'  ·  AP '+a.toFixed(3))]));
+    });
+    k.push(S('rect',{x:(x0+best*cw).toFixed(1),y:y,width:(cw+.4).toFixed(2),height:rh,fill:'none',stroke:'#eef0f7','stroke-width':1.5}));
+    k.push(T(48,y+rh/2+3.2,s,{'text-anchor':'end','font-size':9,fill:s==='650M'?'#eef0f7':'#8b94ab'}));
+    k.push(T(612,y+rh/2+3,v[best].toFixed(3),{'font-size':8.5,fill:s==='650M'?'#eef0f7':'#5c6377'}));
+    if(ri===order.length-1){
+      k.push(T(x0+1,y+rh+9,'layer 0',{'font-size':6.5,fill:'#5c6377'}));
+      k.push(T(x1-1,y+rh+9,'last layer',{'font-size':6.5,fill:'#5c6377','text-anchor':'end'}));
     }
-    window.addEventListener('scroll', () => {
-      if(!ticking){ ticking = true; requestAnimationFrame(update); }
-    }, { passive: true });
-    window.addEventListener('resize', update);
-    update();
-  })();
+  });
+  var yb=16+order.length*(rh+gap)+6;
+  for(var i=0;i<30;i++) k.push(S('rect',{x:x0+i*4.2,y:yb,width:4.3,height:7,fill:ramp(i/29)}));
+  k.push(T(x0-6,yb+6.5,'AP',{'text-anchor':'end','font-size':8}));
+  k.push(T(x0+1,yb+18,lo.toFixed(3),{'font-size':7.5,fill:'#5c6377'}));
+  k.push(T(x0+126,yb+18,hi.toFixed(3),{'font-size':7.5,fill:'#5c6377','text-anchor':'end'}));
+  k.push(T(x0+150,yb+6.5,'box = best layer in that model · 650M peaks at its very last layer',{'font-size':8,fill:'#5c6377'}));
+  mount('f-heat',w,yb+26,k);
+})();
 
+/* ---- Fig 8: per-family scatter ---- */
+(function(){
+  var w=640,h=170,x0=46,x1=600,y0=14,y1=124,k=[];
+  function X(n){return x0+(x1-x0)*Math.log10(n)/Math.log10(60)}
+  function Y(v){return y1-(y1-y0)*v}
+  [0,.25,.5,.75,1].forEach(function(g){
+    k.push(S('line',{x1:x0,y1:Y(g),x2:x1,y2:Y(g),stroke:'rgba(140,165,220,.12)'}));
+    k.push(T(x0-6,Y(g)+3,g.toFixed(2),{'text-anchor':'end','font-size':7.5}));
+  });
+  k.push(S('line',{x1:x0,y1:Y(D.chance),x2:x1,y2:Y(D.chance),stroke:'#ff2e9a','stroke-dasharray':'3 3'}));
+  k.push(T(x1+4,Y(D.chance)+3,'chance',{'font-size':7.5,fill:'#ff2e9a'}));
+  // 56 families have one member, so they would pile onto a single x.
+  // Spread them deterministically within their own column; the y values are untouched.
+  var sing=D.perfam.filter(function(f){return f[1]===1}).length, seen={};
+  D.perfam.forEach(function(f){
+    var n=f[1]; seen[n]=(seen[n]||0)+1;
+    var cnt=D.perfam.filter(function(g){return g[1]===n}).length;
+    var jit=cnt>1 ? ((seen[n]-1)/(cnt-1)-0.5)*Math.min(26,cnt*1.6) : 0;
+    var col=n===1?'#ff2e9a':(n<10?'#45d6e8':'#4d8bff');
+    k.push(S('circle',{cx:(X(n)+jit).toFixed(1),cy:Y(f[2]).toFixed(1),r:n===1?2.4:(n<10?3.2:5),fill:col,'fill-opacity':.6},
+      [tip(f[0]+'  ·  '+n+' member'+(n>1?'s':'')+'  ·  AP '+f[2].toFixed(3)+'  ·  AUROC '+f[3].toFixed(3))]));
+  });
+  [1,2,3,5,10,20,30,53].forEach(function(t){
+    k.push(T(X(t),138,t,{'text-anchor':'middle','font-size':7.5}));
+  });
+  k.push(T(x0,152,'family size (members held out)  →',{'font-size':7.5,fill:'#5c6377'}));
+  k.push(T(x0,164,sing+' of 76 families have exactly one member, so those points are one sequence against ten decoys',{'font-size':7.5,fill:'#ff2e9a'}));
+  k.push(T(0,y0-4,'AP',{'font-size':7.5,fill:'#5c6377'}));
+  mount('f-fam',w,h,k);
+})();
+
+/* ---- Fig 9: nested volume envelopes ---- */
+(function(){
+  var w=320,h=190,k=[],cy=72;
+  var A={PHE:97.6,L4F:104.3,'2-Nal':136.6};
+  function R(v){return Math.sqrt(v)*2.9}
+  // panel 1: PHE inside L4F
+  k.push(T(14,16,'L4F vs PHE',{'font-size':8.5,fill:'#ff7d45'}));
+  k.push(S('circle',{cx:80,cy:cy,r:R(A.L4F),fill:'rgba(255,125,69,.14)',stroke:'#ff7d45','stroke-width':1.4},[tip('L4F — 104.3 Å³')]));
+  k.push(S('circle',{cx:80,cy:cy,r:R(A.PHE),fill:'rgba(140,165,220,.18)',stroke:'#8b94ab','stroke-width':1.2,'stroke-dasharray':'3 2'},[tip('PHE — 97.6 Å³')]));
+  k.push(T(80,cy+3,'0.0 Å³',{'text-anchor':'middle','font-size':13,fill:'#ff2e9a','font-weight':600}));
+  k.push(T(80,cy+16,'of PHE outside',{'text-anchor':'middle','font-size':7.5,fill:'#ff2e9a'}));
+  k.push(T(80,cy+R(A.L4F)+15,'no steric exclusion',{'text-anchor':'middle','font-size':7.5,fill:'#ff7d45'}));
+  // panel 2: 2-Nal vs PHE
+  k.push(T(190,16,'2-Nal vs PHE',{'font-size':8.5,fill:'#45d6e8'}));
+  k.push(S('circle',{cx:238,cy:cy,r:R(A['2-Nal']),fill:'rgba(69,214,232,.14)',stroke:'#45d6e8','stroke-width':1.4},[tip('2-Nal — 136.6 Å³')]));
+  k.push(S('circle',{cx:238,cy:cy,r:R(A.PHE),fill:'rgba(140,165,220,.18)',stroke:'#8b94ab','stroke-width':1.2,'stroke-dasharray':'3 2'},[tip('PHE — 97.6 Å³')]));
+  k.push(T(238,cy+3,'+39.9 Å³',{'text-anchor':'middle','font-size':13,fill:'#45d6e8','font-weight':600}));
+  k.push(T(238,cy+16,'surplus',{'text-anchor':'middle','font-size':7.5,fill:'#45d6e8'}));
+  k.push(T(238,cy+R(A['2-Nal'])+15,'6.0× the L4F margin',{'text-anchor':'middle','font-size':7.5,fill:'#45d6e8'}));
+  k.push(S('line',{x1:14,y1:150,x2:306,y2:150,stroke:'rgba(140,165,220,.2)'}));
+  k.push(T(14,164,'LigandMPNN sequence shift, L4F vs PHE',{'font-size':7.5,fill:'#5c6377'}));
+  k.push(T(306,164,'0.0034 bits',{'font-size':8.5,fill:'#ff2e9a','text-anchor':'end'}));
+  k.push(T(14,178,'same positions, whole-ligand context on/off',{'font-size':7.5,fill:'#5c6377'}));
+  k.push(T(306,178,'0.60 bits — 180×',{'font-size':8.5,fill:'#8b94ab','text-anchor':'end'}));
+  mount('f-vol',w,h,k);
+})();
+
+/* ---- Fig 10: Trp levers ---- */
+(function(){
+  var w=320,h=118,k=[];
+  D.trp.forEach(function(t,i){
+    var y=i*28, last=i===3;
+    k.push(S('rect',{x:0,y:y,width:320,height:25,fill:last?'rgba(160,123,255,.08)':'rgba(69,214,232,.05)',
+      stroke:last?'#a07bff':'rgba(140,165,220,.15)'}));
+    k.push(T(10,y+12,t[0],{'font-size':8.5,fill:last?'#a07bff':'#8b94ab'}));
+    k.push(T(10,y+21,t[2],{'font-size':7,fill:'#5c6377'}));
+    k.push(T(310,y+17,t[1]+(i===3?' Å':' Å³'),{'text-anchor':'end','font-size':13,
+      fill:last?'#a07bff':'#45d6e8','font-weight':600}));
+  });
+  mount('f-trp',w,h,k);
+})();
+
+/* ---- Fig 11: error unit chart, 58 squares ---- */
+(function(){
+  var w=320,k=[],P=12,SZ=9.6,x=0,y=22,maxY=0;
+  var cols=['#45d6e8','#ffd23f','#ff2e9a'];
+  D.errbins.forEach(function(b,gi){
+    for(var i=0;i<b[1];i++){
+      var r=Math.floor(i/5), c=i%5;
+      k.push(S('rect',{x:x+c*P,y:y+r*P,width:SZ,height:SZ,fill:cols[gi],rx:1},[tip(b[0]+' — '+b[1]+' of 58 rows')]));
+    }
+    var bot=y+Math.ceil(b[1]/5)*P;
+    k.push(T(x,14,b[0],{'font-size':8,fill:cols[gi]}));
+    k.push(T(x,bot+11,b[1]+' rows',{'font-size':8.5,fill:cols[gi],'font-weight':600}));
+    maxY=Math.max(maxY,bot+11);
+    x+=5*P+22;
+  });
+  k.push(T(0,maxY+16,'median error 2.1× · worst 110×',{'font-size':7.5,fill:'#5c6377'}));
+  mount('f-err',w,maxY+22,k);
+})();
+
+/* ---- Fig 12: composition of the 154 rows ---- */
+(function(){
+  var w=320,k=[],tot=0,x=0;
+  D.mods.forEach(function(m){tot+=m[1]});
+  var cols=['#4d8bff','#45d6e8','#a07bff','#ffd23f','#ff7d45'];
+  // Narrow segments can't carry a label in place, so they drop to a second
+  // tier and get a leader line. Both tiers are packed left to right.
+  var segs=D.mods.map(function(m,i){
+    var bw=320*m[1]/tot, s={m:m,i:i,x:x,bw:bw,wide:bw>58}; x+=bw; return s;
+  });
+  var cursor={46:0,62:150};
+  segs.forEach(function(s){
+    var ty=s.wide?46:62, lblW=String(s.m[1]).length*6.6+s.m[0].length*3.95+10;
+    // wide segments sit under their own bar; narrow ones just queue on tier 2
+    var lx=s.wide?Math.min(Math.max(s.x,cursor[ty]),320-lblW):cursor[ty];
+    cursor[ty]=lx+lblW;
+    k.push(S('rect',{x:s.x.toFixed(1),y:14,width:Math.max(s.bw-1.5,2).toFixed(1),height:20,fill:cols[s.i]},
+      [tip(s.m[0]+' — '+s.m[1]+' peptides of '+tot)]));
+    if(!s.wide) k.push(S('line',{x1:(s.x+s.bw/2).toFixed(1),y1:35,x2:(lx+6).toFixed(1),y2:ty-8,
+      stroke:cols[s.i],opacity:.5,'stroke-width':.8}));
+    k.push(T(lx,ty,s.m[1],{'font-size':10,fill:cols[s.i],'font-weight':600}));
+    k.push(T(lx+String(s.m[1]).length*6.6,ty,s.m[0],{'font-size':6.8,fill:'#5c6377'}));
+  });
+  k.push(T(0,9,'154 modified peptides, by chemistry',{'font-size':7.5,fill:'#5c6377'}));
+  k.push(S('line',{x1:0,y1:72,x2:320,y2:72,stroke:'rgba(140,165,220,.2)'}));
+  k.push(T(0,84,'61 with a numeric IC50 · 93 censored above 40,000 nM',{'font-size':7.5,fill:'#5c6377'}));
+  mount('f-mods',w,92,k);
+})();
+
+/* ---- Fig 13: worst case ---- */
+(function(){
+  var w=320,h=104,k=[];
+  k.push(S('text',{x:0,y:14,'font-size':12,'letter-spacing':2.4,fill:'#8b94ab'},[
+    'SHLVEAL', S('tspan',{fill:'#ff2e9a','font-weight':600},['Y']), 'LV']));
+  k.push(T(0,27,'chlorinated tyrosine, position 8',{'font-size':7,fill:'#5c6377'}));
+  k.push(S('line',{x1:0,y1:40,x2:320,y2:40,stroke:'rgba(140,165,220,.2)'}));
+  k.push(T(0,56,'PREDICTED',{'font-size':7.5,fill:'#5c6377'}));
+  k.push(S('text',{x:0,y:82,'font-size':26,fill:'#45d6e8','font-weight':600},['9.79',S('tspan',{'font-size':11,fill:'#5c6377'},[' nM'])]));
+  k.push(T(150,56,'MEASURED',{'font-size':7.5,fill:'#5c6377'}));
+  k.push(S('text',{x:150,y:82,'font-size':26,fill:'#ff2e9a','font-weight':600},['1066',S('tspan',{'font-size':11,fill:'#5c6377'},[' nM'])]));
+  k.push(T(150,98,'109× out',{'font-size':8,fill:'#ff2e9a'}));
+  mount('f-worst',w,h,k);
+})();
+})();
+
+/* ======================= sequence marquee ======================= */
+(function(){
+  if(!window.D) return;
+  var seq="FTVPEEAAFLAGKILAGVAAGAAPLDELVAMAREMLAAGADGVKAWWHGIPIMGMAPTPLDDFVALMRALRELRPAILVAGVTSADLDAARAAIEAAHAAGADAISLFGKPAGPEGDPSVDNGVLTAEDIAFQAQMGAAARAAGFRAVFAAGVTTAAEVQALIDAGAADGVIIVASYPERKPEVLAAARVAHAAGKLVILNVRPPGSPGNTLTVDQTLALIQEVQPDAVIIDPDGLTPEEREQALANAKTLIAGIRAARA";
+  var cls={A:'h',V:'h',L:'h',I:'h',M:'h',C:'h',P:'h',F:'ar',W:'ar',Y:'ar',S:'p',T:'p',N:'p',Q:'p',H:'p',K:'pos',R:'pos',D:'neg',E:'neg',G:'g'};
+  function run(s){var o='',cur=null,buf='';
+    for(var i=0;i<s.length;i++){var c=cls[s[i]]||'g';
+      if(c!==cur){ if(buf)o+='<span class="r-'+cur+'">'+buf+'</span>'; cur=c; buf=''; }
+      buf+=s[i];}
+    if(buf)o+='<span class="r-'+cur+'">'+buf+'</span>'; return o;}
+  var one=run(seq+'  ·  ');
+  document.getElementById('seqtrack').innerHTML=one+one;
+})();
+
+/* === re-aim a #hash landing once webfonts have settled the layout === */
+(function(){
+  if(!location.hash) return;
+  function go(){var el=document.getElementById(location.hash.slice(1)); if(el) el.scrollIntoView();}
+  addEventListener('load',go);
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){setTimeout(go,60)});
+})();
+
+/* ======================= rail scroll-spy ======================= */
+(function(){
+  var links=[].slice.call(document.querySelectorAll('#rail a'));
+  var pct=document.getElementById('pct');
+  var ids=links.map(function(a){return a.getAttribute('href').slice(1)});
+  function tick(){
+    var y=window.scrollY||document.documentElement.scrollTop;
+    var h=document.documentElement.scrollHeight-window.innerHeight;
+    pct.textContent=String(Math.round(h>0?y/h*100:0)).padStart(2,'0');
+    var best=0;
+    ids.forEach(function(id,i){var el=document.getElementById(id);
+      if(el && el.getBoundingClientRect().top<=window.innerHeight*0.38) best=i;});
+    links.forEach(function(a,i){a.classList.toggle('on',i===best)});
+  }
+  addEventListener('scroll',tick,{passive:true}); addEventListener('resize',tick); tick();
+})();
+
+/* ======================= reveal ======================= */
+(function(){
+  if(!('IntersectionObserver' in window)){
+    [].forEach.call(document.querySelectorAll('.rv'),function(e){e.classList.add('in')}); return;}
+  var io=new IntersectionObserver(function(es){
+    es.forEach(function(e){ if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); } });
+  },{rootMargin:'0px 0px -8% 0px',threshold:0.03});
+  [].forEach.call(document.querySelectorAll('.rv'),function(e){io.observe(e)});
+})();
+
+/* ======================= specimen renderer ======================= */
+(function(){
+  var S0=window.D&&window.D.spec; if(!S0) return;
+  var cv=document.getElementById('stage'), ctx=cv.getContext('2d');
+  var hint=document.getElementById('hint');
+  var reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var trace=S0.trace, lig=S0.lig, side=S0.side, hb=S0.hb;
+  var R=0; trace.forEach(function(r){R=Math.max(R,Math.hypot(r.p[0],r.p[1],r.p[2]))});
+
+  // Catmull-Rom through the CA atoms so the backbone is a smooth tube
+  var SUB=5, runs=[], cur=[trace[0]];
+  for(var i=1;i<trace.length;i++){
+    var a=trace[i-1].p,b=trace[i].p;
+    if(Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2])>5){runs.push(cur);cur=[];}
+    cur.push(trace[i]);
+  }
+  runs.push(cur);
+  var curve=[];
+  runs.forEach(function(run){
+    if(run.length<2) return;
+    var start=curve.length;
+    for(var i=0;i<run.length-1;i++){
+      var p0=run[Math.max(0,i-1)].p,p1=run[i].p,p2=run[i+1].p,p3=run[Math.min(run.length-1,i+2)].p;
+      for(var s=0;s<SUB;s++){
+        var t=s/SUB,t2=t*t,t3=t2*t,q=[];
+        for(var d=0;d<3;d++) q[d]=0.5*((2*p1[d])+(-p0[d]+p2[d])*t+(2*p0[d]-5*p1[d]+4*p2[d]-p3[d])*t2+(-p0[d]+3*p1[d]-3*p2[d]+p3[d])*t3);
+        curve.push({p:q,b:run[i].b+(run[i+1].b-run[i].b)*t,first:(i===0&&s===0)});
+      }
+    }
+    curve.push({p:run[run.length-1].p,b:run[run.length-1].b,first:false});
+    curve[start].first=true;
+  });
+
+  var yaw=0.6,pitch=-0.32,dragging=false,lx=0,ly=0,spin=reduce?0:0.0035,vel=0;
+  var W=0,H=0,cx=0,cy=0,sc=1;
+  function size(){
+    var dpr=Math.min(devicePixelRatio||1,2),r=cv.getBoundingClientRect();
+    W=r.width;H=r.height;cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);cx=W/2;cy=H/2;sc=Math.min(W,H)/(R*2.35);
+  }
+  function proj(p){
+    var cw=Math.cos(yaw),sw=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+    var x=p[0]*cw+p[2]*sw, z=-p[0]*sw+p[2]*cw;
+    return [cx+x*sc, cy+(p[1]*cp-z*sp)*sc, p[1]*sp+z*cp];
+  }
+  function plddt(b){return b>=90?'#4d8bff':b>=70?'#45d6e8':b>=50?'#ffd23f':'#ff7d45'}
+  var ELEM={C:'#c8cedd',N:'#4d8bff',O:'#ff5a52',S:'#ffd23f',F:'#5ef2a4'};
+  function mix(hex,t){
+    var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return 'rgb('+Math.round(r*t+7*(1-t))+','+Math.round(g*t+9*(1-t))+','+Math.round(b*t+16*(1-t))+')';
+  }
+  function anchor(i){
+    var x=i===0?W*0.235:W*0.765, y=i===0?H*0.235:H*0.80;
+    var half=(labels&&labels[i]?labels[i].offsetWidth:160)/2+5;
+    return [Math.max(half,Math.min(W-half,x)),y];
+  }
+  var labels=hb.map(function(h){
+    var d=document.createElement('div'); d.className='lbl'; d.style.color='#ff2e9a';
+    d.innerHTML=h.label+' <b style="color:#eef0f7">'+h.d+'</b> <span style="color:#8b94ab">'+h.ang+'</span>';
+    cv.parentNode.appendChild(d); return d;
+  });
+  function placeLabels(){
+    hb.forEach(function(h,i){var t=anchor(i);labels[i].style.left=t[0]+'px';labels[i].style.top=t[1]+'px';});
+  }
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    var P=curve.map(function(r){return proj(r.p)}),zmin=1e9,zmax=-1e9;
+    P.forEach(function(p){if(p[2]<zmin)zmin=p[2];if(p[2]>zmax)zmax=p[2]});
+    var span=(zmax-zmin)||1;
+    var CH=9,chunks=[],run=[];
+    for(var i=0;i<P.length;i++){
+      if(curve[i].first&&run.length){chunks.push(run);run=[];}
+      run.push(i);
+      if(run.length>=CH+1&&i<P.length-1&&!curve[i+1].first){chunks.push(run);run=[i];}
+    }
+    if(run.length>1) chunks.push(run);
+    chunks.forEach(function(ch){var z=0;ch.forEach(function(i){z+=P[i][2]});ch.z=z/ch.length});
+    chunks.sort(function(a,b){return a.z-b.z});
+    ctx.lineCap='round';ctx.lineJoin='round';
+    var base=Math.max(3.6,2.2*sc);
+    chunks.forEach(function(ch){
+      var t=(ch.z-zmin)/span,w=base*(0.74+0.46*t);
+      ctx.beginPath();ctx.moveTo(P[ch[0]][0],P[ch[0]][1]);
+      for(var k=1;k<ch.length;k++) ctx.lineTo(P[ch[k]][0],P[ch[k]][1]);
+      ctx.strokeStyle='rgba(4,5,9,.95)';ctx.lineWidth=w+2.6;ctx.stroke();
+      ctx.strokeStyle=mix(plddt(curve[ch[(ch.length/2)|0]].b),0.16+0.84*t);ctx.lineWidth=w;ctx.stroke();
+    });
+    var SC={ASP232:'#ff5a52',HIS48:'#45d6e8',VAL174:'#ffd23f',TRP46:'#a07bff'};
+    side.forEach(function(res){
+      var col=SC[res.n]||'#8b94ab', pts=res.atoms.map(function(a){return proj(a.p)});
+      ctx.strokeStyle=col;ctx.lineWidth=2.1;
+      res.bonds.forEach(function(b){ctx.beginPath();ctx.moveTo(pts[b[0]][0],pts[b[0]][1]);ctx.lineTo(pts[b[1]][0],pts[b[1]][1]);ctx.stroke();});
+    });
+    ctx.strokeStyle='#ff2e9a';ctx.lineWidth=1.6;ctx.setLineDash([3,3]);
+    hb.forEach(function(h){var a=proj(h.from),b=proj(h.to);
+      ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();});
+    ctx.setLineDash([]);
+    ctx.lineWidth=1;ctx.strokeStyle='rgba(255,46,154,.55)';
+    hb.forEach(function(h,i){
+      var a=proj(h.from),b=proj(h.to),m=[(a[0]+b[0])/2,(a[1]+b[1])/2],t=anchor(i);
+      ctx.beginPath();ctx.moveTo(m[0],m[1]);ctx.lineTo(t[0],t[1]);ctx.stroke();
+      ctx.beginPath();ctx.arc(m[0],m[1],2.2,0,6.284);ctx.fillStyle='#ff2e9a';ctx.fill();
+    });
+    var lp=lig.atoms.map(function(a){return proj(a.p)});
+    ctx.strokeStyle='#eef0f7';ctx.lineWidth=3.4;
+    lig.bonds.forEach(function(b){ctx.beginPath();ctx.moveTo(lp[b[0]][0],lp[b[0]][1]);ctx.lineTo(lp[b[1]][0],lp[b[1]][1]);ctx.stroke();});
+    ctx.shadowColor='rgba(77,139,255,.55)';ctx.shadowBlur=11;
+    lig.atoms.forEach(function(a,i){ctx.fillStyle=ELEM[a.e]||'#c8cedd';
+      ctx.beginPath();ctx.arc(lp[i][0],lp[i][1],3.4,0,6.284);ctx.fill();});
+    ctx.shadowBlur=0;
+    placeLabels();
+  }
+  function down(e){dragging=true;cv.classList.add('drag');var t=e.touches?e.touches[0]:e;lx=t.clientX;ly=t.clientY;if(hint)hint.style.opacity='0';}
+  function move(e){
+    if(!dragging) return;
+    var t=e.touches?e.touches[0]:e,dx=(t.clientX-lx)/160,dy=(t.clientY-ly)/200;
+    yaw+=dx;pitch=Math.max(-1.25,Math.min(1.25,pitch+dy));vel=dx;lx=t.clientX;ly=t.clientY;
+    if(e.touches) e.preventDefault();
+  }
+  function up(){dragging=false;cv.classList.remove('drag');}
+  cv.addEventListener('mousedown',down);addEventListener('mousemove',move);addEventListener('mouseup',up);
+  cv.addEventListener('touchstart',down,{passive:true});cv.addEventListener('touchmove',move,{passive:false});addEventListener('touchend',up);
+  var visible=true;
+  if('IntersectionObserver' in window) new IntersectionObserver(function(es){visible=es[0].isIntersecting}).observe(cv);
+  function loop(){ if(visible){ if(!dragging){yaw+=spin+vel*0.18;vel*=0.9;} draw(); } requestAnimationFrame(loop); }
+  size(); addEventListener('resize',function(){size();draw()});
+  if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){size();draw()});
+  loop();
+})();
 </script>
 </body>
 </html>
