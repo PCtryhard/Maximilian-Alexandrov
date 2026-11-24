@@ -51,3 +51,16 @@ switching the Pages source to GitHub Actions, would leave one path instead of tw
   amino acid
 - [orthcom-immuno](https://github.com/PCtryhard/orthcom-immuno), how wrong the
   canonical-surrogate shortcut is for MHC-I prediction
+
+## Social card
+
+`og-card.png` is the preview image for links to the site. It is a render of
+design `01.c04.mutate.d8ca9d` — the same structure as the one in the header,
+same pLDDT colouring, with the 6NT substrate in the pocket.
+
+```
+python tools/render_card.py og-card.png
+```
+
+That reads the coordinates out of `data.js`, so it stays in step with whatever
+the header is showing. Needs Pillow; the typeface is fetched once and cached.
